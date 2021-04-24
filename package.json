@@ -1,5 +1,5 @@
 {
-  "name": "Deeper Oasis",
+  "name": "deeper-oasis",
   "version": "1.0.0",
   "description": "grow an oasis in the desert",
   "main": "server.js",
