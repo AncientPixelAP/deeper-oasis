@@ -51,17 +51,21 @@ export default class Hand{
                 this.justPressed = true;
                 this.pressed = true;
                 this.justReleased = false;
+                //console.log("mouse just pressed")
 
                 this.start.x = this.pos.x;
                 this.start.y = this.pos.y;
             }else{
                 this.justPressed = false;
+                //console.log("mouse pressed")
             }
         }else{
             if(this.pressed === true){
                 this.pressed = false;
                 this.justReleased = true;
                 this.justPressed = false;
+
+                //console.log("mouse released")
 
                 this.start.x = this.pos.x;
                 this.start.y = this.pos.y;

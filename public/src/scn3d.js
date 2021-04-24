@@ -301,61 +301,85 @@ export default class Scn3d extends Phaser.Scene {
             //this.player.pos.y += 1;
         }
 
-        if(INPUTS.btnA.justReleased){
-            socket.emit("spawnStoneStack", {
+        let returnColl = [];
+        let checkColl = [
+            {//check ground at player position
+                pos: {
+                    x: this.player.pos.x,
+                    y: this.player.pos.y + this.player.eyeHeight,
+                    z: this.player.pos.z
+                },
+                dir: {
+                    x: 0,
+                    y: 1,
+                    z: 0
+                },
+                hit: []
+            }, {//check wall colllision global x axis
+                pos: {
+                    x: toPos.x,
+                    y: toPos.y - this.player.stepHeight,
+                    z: toPos.z
+                },
+                dir: {
+                    x: 1,
+                    y: 0,
+                    z: 0
+                },
+                hit: []
+            }, {//check wall colllision global z axis
+                pos: {
+                    x: toPos.x,
+                    y: toPos.y - this.player.stepHeight,
+                    z: toPos.z
+                },
+                dir: {
+                    x: 0,
+                    y: 0,
+                    z: 1
+                },
+                hit: []
+            }
+        ]
+
+        //try to find stoeckchen position
+        if (INPUTS.btnA.justReleased) {
+            checkColl.push({
+                pos: {
+                    x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
+                    y: this.player.pos.y + this.player.eyeHeight,
+                    z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
+                },
+                dir: {
+                    x: 0,
+                    y: 1,
+                    z: 0
+                },
+                hit: []
+            });
+            /*socket.emit("spawnStoneStack", {
                 pos: {
                     x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
                     y: this.player.pos.y,
                     z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
                 }
-            });
+            });*/
         }
 
-        let returnColl = [];
-        returnColl = this.geometryController.update(
-            [
-                {//check ground at player position
+        returnColl = this.geometryController.update(checkColl);
+        
+        //really place stoeckchen now
+        if (INPUTS.btnA.justReleased) {
+            if (returnColl[3].hit.length > 0) {
+                socket.emit("spawnStoneStack", {
                     pos: {
-                        x: this.player.pos.x,
-                        y: this.player.pos.y + this.player.eyeHeight,
-                        z: this.player.pos.z
-                    },
-                    dir: {
-                        x: 0,
-                        y: 1,
-                        z: 0
-                    },
-                    hit: []
-                }, {//check wall colllision global x axis
-                    pos: {
-                        x: toPos.x,
-                        y: toPos.y - this.player.stepHeight,
-                        z: toPos.z
-                    },
-                    dir: {
-                        x: 1,
-                        y: 0,
-                        z: 0
-                    },
-                    hit: []
-                }, {//check wall colllision global z axis
-                    pos: {
-                        x: toPos.x,
-                        y: toPos.y - this.player.stepHeight,
-                        z: toPos.z
-                    },
-                    dir: {
-                        x: 0,
-                        y: 0,
-                        z: 1
-                    },
-                    hit: []
-                }
-            ]
-        );
-        /*if(this.input.activePointer.isDown){
-            console.log(returnColl);
-        }*/
+                        x: returnColl[3].hit[0].pt[0],
+                        y: returnColl[3].hit[0].pt[1],
+                        z: returnColl[3].hit[0].pt[2]
+                    }
+                });
+            }
+        }
 
         //resolve collision with ground
         if (returnColl[0].hit.length > 0) {
@@ -640,7 +664,7 @@ export default class Scn3d extends Phaser.Scene {
             }
         }
         //A
-        if (this.keys.enter.isDown || (gamepad !== null ? gamepad.buttons[1].pressed : false)) {
+        if (this.keys.enter.isDown || (gamepad !== null ? gamepad.buttons[0].pressed : false)) {
             if (INPUTS.btnA.pressed === false) {
                 INPUTS.btnA.justPressed = true;
                 INPUTS.btnA.pressed = true;
@@ -658,21 +682,21 @@ export default class Scn3d extends Phaser.Scene {
             }
         }
         //B
-        if (this.keys.escape.isDown || (gamepad !== null ? gamepad.buttons[0].pressed : false)) {
-            if (INPUTS.btnA.pressed === false) {
-                INPUTS.btnA.justPressed = true;
-                INPUTS.btnA.pressed = true;
-                INPUTS.btnA.justReleased = false;
+        if (this.keys.escape.isDown || (gamepad !== null ? gamepad.buttons[1].pressed : false)) {
+            if (INPUTS.btnB.pressed === false) {
+                INPUTS.btnB.justPressed = true;
+                INPUTS.btnB.pressed = true;
+                INPUTS.btnB.justReleased = false;
             } else {
-                INPUTS.btnA.justPressed = false;
+                INPUTS.btnB.justPressed = false;
             }
         } else {
-            if (INPUTS.btnA.pressed === true) {
-                INPUTS.btnA.pressed = false;
-                INPUTS.btnA.justReleased = true;
-                INPUTS.btnA.justPressed = false;
+            if (INPUTS.btnB.pressed === true) {
+                INPUTS.btnB.pressed = false;
+                INPUTS.btnB.justReleased = true;
+                INPUTS.btnB.justPressed = false;
             } else {
-                INPUTS.btnA.justReleased = false;
+                INPUTS.btnB.justReleased = false;
             }
         }
     }
