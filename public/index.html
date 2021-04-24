@@ -3,6 +3,7 @@
 
 <head>
     <script src="./lib/phaser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="src/inputs.js"></script>
 </head>
 
@@ -24,6 +25,8 @@
             NOSCALE2D: 2,
             BILLBOARD: 3
         }
+
+        var socket = io(window.location.href);
 
         //gamepads
         let gamepads = {};
