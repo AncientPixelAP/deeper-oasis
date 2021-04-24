@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="./lib/phaser.min.js"></script>
+    <script src="src/inputs.js"></script>
+</head>
+
+<body style="margin: 0px; padding: 0px; background-color: black;">
+    <script>
+        const HALFPI = Math.PI * 0.5;
+        const CONSTANT = {
+            FOO: 0,
+            BAR: 1
+        }
+        const PLAYERMODE = {
+            LOOK: 0,
+            INTERACT: 1,
+            DIALOGUE: 2
+        }
+        const DRAWMODE = {
+            D3D: 0,
+            D2D: 1,
+            NOSCALE2D: 2,
+            BILLBOARD: 3
+        }
+
+        //gamepads
+        let gamepads = {};
+        let gamepadsConnected = 0;
+        function gamepadHandler(_event, _connecting) {
+            var gamepad = _event.gamepad;
+            // Note:
+            // gamepad === navigator.getGamepads()[gamepad.index]
+
+            if (_connecting) {
+                gamepads[gamepad.index] = gamepad;
+                console.log(gamepad);
+                gamepadsConnected += 1;
+            } else {
+                delete gamepads[gamepad.index];
+                gamepadsConnected -= 1;
+            }
+        }
+        window.addEventListener("gamepadconnected", function (e) { gamepadHandler(e, true); }, false);
+        window.addEventListener("gamepaddisconnected", function (e) { gamepadHandler(e, false); }, false);
+
+        //adds
+        let rti, pip, eud;
+        
+    </script>
+    <script type="module">
+        import Preloader from './src/preloader.js'; 
+        import ScnLoad from './src/scnLoad.js'; 
+        import ScnMain from './src/scnMain.js'; 
+        import Scn3d from './src/scn3d.js'; 
+
+        import RTI from "./src/additionalMath/rayTriangleIntersection.js";
+        import PIP from "./src/additionalMath/pointInPolygon.js";
+        import EuclidianDistance from "./src/additionalMath/euclidianDistance.js";
+
+        //import RTI from "./src/additionalMath/rayTriangleIntersection.js";
+
+        let ratio = Math.max(0.5, Math.min(1.77,window.innerWidth / window.innerHeight));
+        let w = 512;
+        let h = Math.floor(w / ratio);
+
+        var config = { 
+            type: Phaser.AUTO, 
+            width: w,//512
+            height: h, //320
+            render: { 
+                antialias: false,
+                roundPixels: true,
+                pixelArt: true
+            }, scale: { 
+                autoCenter: true, 
+                mode: Phaser.Scale.FIT 
+            }, 
+            seed: ["randomSeed"],
+            scene: [ 
+                Preloader(),
+                ScnLoad,
+                ScnMain,
+                Scn3d
+            ] 
+        }; 
+        var game = new Phaser.Game(config);
+
+        rti = new RTI();
+        pip = new PIP();
+        eud = new EuclidianDistance();
+    </script>
+</body>
+
+</html>
