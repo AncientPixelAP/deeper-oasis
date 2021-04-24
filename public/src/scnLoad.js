@@ -25,7 +25,7 @@ export default class ScnLoad extends Phaser.Scene {
         this.load.image("sprStoneStack00", "sprites/sprStoneStack00.png");
 
         this.load.json("modDesertTile", "json/models/desertTile.json");
-        this.load.json("modOtherPlayer", "json/models/otherplayer.json");
+        this.load.json("modOtherPlayer", "json/models/otherPlayer.json");
         this.load.json("modStoneStack", "json/models/stoneStack.json");
 
 
