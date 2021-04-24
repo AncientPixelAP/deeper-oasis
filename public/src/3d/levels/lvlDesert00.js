@@ -29,9 +29,9 @@ export default class LevelDesert00{
             gridSize: 64
         }
         this.desert = [];
-        for(let yy = -16 ; yy < 16 ; yy++){
-            for (let xx = -16; xx < 16; xx++){
-                if(Phaser.Math.Distance.Between(0, 0, xx, yy) < 16){
+        for(let yy = -32 ; yy < 32 ; yy++){
+            for (let xx = -32; xx < 32; xx++){
+                if(Phaser.Math.Distance.Between(0, 0, xx, yy) < 24){
                     this.desert.push(this.scene.geometryController.loadModel("desertTile", "modDesertTile", {
                         x: xx * this.desertParams.gridSize,
                         y: 0,
@@ -47,10 +47,12 @@ export default class LevelDesert00{
         this.sun.depth = -10000;
 
         this.troglodytes = [];
+        this.stoneStacks = [];
     }
 
     update(){
         let recalc = false;
+        //move with the player to reuse the same desert tiles
         if (this.desertPos.z - this.scene.player.pos.z >= this.desertParams.gridSize){
             this.desertPos.z -= this.desertParams.gridSize;
             for(let d of this.desert){
@@ -79,11 +81,22 @@ export default class LevelDesert00{
             }
         }
 
+        //update desert tile geometry and textures based on position
         if(recalc === true){
             this.calculateDesert();
         }
 
         this.calculateSun({x: 0, y: 0, z: 0}, this.scene.player.dir);
+    }
+
+    addStoneStack(_data){
+        this.stoneStacks.push(this.scene.geometryController.loadModel("stoneStack_" + String(this.stoneStacks.length), "modStoneStack", {
+                x: _data.pos.x,
+                y: _data.pos.y,
+                z: _data.pos.z
+            })
+        );
+        this.stoneStacks[this.stoneStacks.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
     }
 
     addOtherPlayer(_id, _data){
@@ -125,10 +138,11 @@ export default class LevelDesert00{
                 hh = this.noise.simplex3(xx * 0.001, yy * 0.001, zz * 0.001);
 
                 //rare spikes
-                /*if (this.noise.simplex3(xx * 0.1, yy * 0.1, zz * 0.1) > 0.95){
+                if (this.noise.simplex3(xx * 0.1, yy * 0.1, zz * 0.1) > 0.95){
                     rn = -5;
                     hh = 0;
-                }*/
+                    tex = "sprDesert01";
+                }
 
                 //rare plateus
                 if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > 0.6) {

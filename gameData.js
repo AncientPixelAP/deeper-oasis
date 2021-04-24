@@ -3,6 +3,7 @@ let Player = require("./player");
 class GameData {
     constructor() {
         this.players = [];
+        this.stoneStacks = [];
 
         this.states = {
             grow: 0,
@@ -40,6 +41,19 @@ class GameData {
         }
 
         
+    }
+
+    addStoneStack(_id, _data){
+        this.stoneStacks.push({
+            id: _id,
+            data: {
+                pos: {
+                    x: _data.pos.x,
+                    y: _data.pos.y,
+                    z: _data.pos.z
+                }
+            }
+        });
     }
 
     addPlayer(_id, _data){

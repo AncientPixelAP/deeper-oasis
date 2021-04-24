@@ -29,7 +29,7 @@ export class Player3d{
         }
         this.eyeHeight = 24;
         this.stepHeight = 9;
-        this.collisionRadius = 12;
+        this.collisionRadius = 16;
         this.spd = {
             normal: 1,
             sprint: 4

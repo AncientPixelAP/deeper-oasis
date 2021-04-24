@@ -99,6 +99,7 @@ export default class Scn3d extends Phaser.Scene {
         //console.log(socket);
         this.you = null;
         this.playersData = null;
+        this.objectsData = null;
         this.otherPlayers = [];
 
         socket.on("pongTest", (_data) => {
@@ -106,10 +107,18 @@ export default class Scn3d extends Phaser.Scene {
             console.log(_data);
         });
 
+        socket.on("spawnStoneStack", (_data) => {
+            this.level.addStoneStack(_data);
+        })
+
         socket.on("getPlayers", (_data) => {
             console.log(_data);
             this.you = _data.you;
             this.playersData = _data.playersData;
+            this.objectsData = _data.objectsData;
+            for(let s of this.objectsData.stoneStacks){
+                this.level.addStoneStack(s.data);
+            }
             this.synchronize();
         });
 
@@ -203,6 +212,10 @@ export default class Scn3d extends Phaser.Scene {
 
         this.geometryController.draw(this.cam.pos, this.cam.dir);
 
+        for(let op of this.otherPlayers){
+            op.model.quadData[0].depth += 1;
+        }
+
         this.hand.lateUpdate();
 
         if (this.playersData !== null) {
@@ -282,10 +295,20 @@ export default class Scn3d extends Phaser.Scene {
         }
 
         if (INPUTS.btnShoulderRight.pressed) {
-            this.player.pos.y -= 1;
+            //this.player.pos.y -= 1;
         }
         if (INPUTS.btnShoulderLeft.pressed) {
-            this.player.pos.y += 1;
+            //this.player.pos.y += 1;
+        }
+
+        if(INPUTS.btnA.justReleased){
+            socket.emit("spawnStoneStack", {
+                pos: {
+                    x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
+                    y: this.player.pos.y,
+                    z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
+                }
+            });
         }
 
         let returnColl = [];
@@ -521,7 +544,7 @@ export default class Scn3d extends Phaser.Scene {
         //FORWARDS-BACKWARDDS
         INPUTS.stickLeft.vertical = 0;
         INPUTS.stickLeft.horizontal = 0;
-        if (this.keys.w.isDown || this.hand.pressed === true) {
+        if (this.keys.w.isDown) {// || this.hand.pressed === true) {
             INPUTS.stickLeft.vertical = -1;
         } else if (this.keys.s.isDown) {
             INPUTS.stickLeft.vertical = 1;

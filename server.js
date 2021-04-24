@@ -28,7 +28,7 @@ let tick = setInterval(() => {
         }
 
         io.to(p.id).emit("synchUpdate", {
-            playersData: gameData.players
+            playersData: gameData.players,
         });
     }
 }, 100);
@@ -53,7 +53,10 @@ io.on("connection", socket => {
         gameData.addPlayer(id, _data);
         io.to(id).emit("getPlayers", {
             you: gameData.players[gameData.players.length-1],
-            playersData: gameData.players
+            playersData: gameData.players,
+            objectsData: {
+                stoneStacks: gameData.stoneStacks
+            }
         });
     });
 
@@ -94,6 +97,12 @@ io.on("connection", socket => {
             });
         }
     });*/
+    socket.on("spawnStoneStack", (_data) => {
+        gameData.addStoneStack(id, _data);
+        for (let p of gameData.players) {
+            io.to(p.id).emit("spawnStoneStack", _data);
+        }
+    });
 
     //DISCONNECT
     socket.on("disconnect", () => {
