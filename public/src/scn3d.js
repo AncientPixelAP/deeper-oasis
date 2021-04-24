@@ -94,6 +94,53 @@ export default class Scn3d extends Phaser.Scene {
 
         this.modelName = "";
         //this.debugTxt = this.add.bitmapText((this.game.config.width * -0.5) + 16, (this.game.config.height * -0.5) + 16, "whiteRabbit_16", "TEST Test test 00 gbqrSX5s", 16, 1).setOrigin(0).setLetterSpacing(1);
+    
+        //socket stuff!!
+        //console.log(socket);
+        this.you = null;
+        this.playersData = null;
+        this.otherPlayers = [];
+
+        socket.on("pongTest", (_data) => {
+            pongTest
+            console.log(_data);
+        });
+
+        socket.on("getPlayers", (_data) => {
+            console.log(_data);
+            this.you = _data.you;
+            this.playersData = _data.playersData;
+            this.synchronize();
+        });
+
+        socket.on("synchUpdate", (_data) => {
+            //console.log(_data);
+            this.playersData = _data.playersData;
+
+            this.synchronize();
+        });
+
+        socket.on("kickPlayer", (_data) => {
+            for (let i = this.otherPlayers.length - 1; i >= 0; i--) {
+                if (this.otherPlayers[i].id === _data.id) {
+                    this.level.removeOtherPlayer(this.otherPlayers[i].id);
+                    this.otherPlayers.splice(i, 1);
+                }
+            }
+        });
+
+        socket.emit("joinPlayer", {
+            pos: {
+                x: this.player.pos.x,
+                y: this.player.pos.y,
+                z: this.player.pos.z
+            },
+            dir: {
+                pitch: this.player.dir.pitch,
+                yaw: this.player.dir.yaw,
+                roll: this.player.dir.roll
+            }
+        });
     }
 
     update(){
@@ -157,6 +204,14 @@ export default class Scn3d extends Phaser.Scene {
         this.geometryController.draw(this.cam.pos, this.cam.dir);
 
         this.hand.lateUpdate();
+
+        if (this.playersData !== null) {
+            socket.emit("updatePlayer", {
+                id: this.you.id,
+                pos: this.player.pos,
+                dir: this.player.dir
+            });
+        }
     }
 
     editorControls(){
@@ -423,7 +478,40 @@ export default class Scn3d extends Phaser.Scene {
     }
 
     gotoMenu(){
+        socket.emit("leavePlayer", {
+            id: this.you.id
+        });
+
+        socket.off("pongTest");
+        socket.off("getPlayers");
+        socket.off("synchUpdate");
+        socket.off("kickPlayer");
+
         this.scene.start("ScnMain");
+    }
+
+    synchronize(){
+        for(let d of this.playersData){
+            if(d.id !== this.you.id){
+                let found = false;
+                for(let op of this.otherPlayers){
+                    if(op.id === d.id){
+                        found = true;
+                        op.data = d.data;
+                        op.model.jumpToPosition(d.data.pos);
+                    }
+                }
+
+                // create new other player instance
+                if(found === false){
+                    this.otherPlayers.push({
+                        id: d.id,
+                        data: d.data,
+                        model: this.level.addOtherPlayer(d.id, d.data)
+                    });
+                }
+            }
+        }
     }
 
     fillInputs(){

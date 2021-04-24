@@ -67,9 +67,10 @@ io.on("connection", socket => {
     socket.on("updatePlayer", (_data) => {
         let p = getPlayerById(_data.id);
         if(p !== null){
-            p.x = _data.x;
-            p.y = _data.y;
-            p.z = _data.z;
+            p.pos.x = _data.pos.x;
+            p.pos.y = _data.pos.y;
+            p.pos.z = _data.pos.z;
+            p.data = _data;
         }
     })
 

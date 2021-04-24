@@ -32,7 +32,7 @@ export default class LevelDesert00{
         for(let yy = -16 ; yy < 16 ; yy++){
             for (let xx = -16; xx < 16; xx++){
                 if(Phaser.Math.Distance.Between(0, 0, xx, yy) < 16){
-                    this.desert.push(this.scene.geometryController.loadModel("debugTile", "modDebugTile", {
+                    this.desert.push(this.scene.geometryController.loadModel("desertTile", "modDesertTile", {
                         x: xx * this.desertParams.gridSize,
                         y: 0,
                         z: yy * this.desertParams.gridSize
@@ -45,6 +45,8 @@ export default class LevelDesert00{
 
         this.sun = this.scene.add.sprite(0, 0, "sprSun00");
         this.sun.depth = -10000;
+
+        this.troglodytes = [];
     }
 
     update(){
@@ -82,6 +84,32 @@ export default class LevelDesert00{
         }
 
         this.calculateSun({x: 0, y: 0, z: 0}, this.scene.player.dir);
+    }
+
+    addOtherPlayer(_id, _data){
+        this.troglodytes.push(
+            this.scene.geometryController.loadModel(_id, "modOtherPlayer", {
+                x: _data.pos.x,
+                y: _data.pos.y,
+                z: _data.pos.z
+            })
+        );
+        this.troglodytes[this.troglodytes.length-1].setDrawMode(DRAWMODE.BILLBOARD);
+        /*this.troglodytes[this.troglodytes.length - 1].interactable = true;
+        this.troglodytes[this.troglodytes.length - 1].interact = () => {
+            //this.scene.player.setMode(PLAYERMODE.INTERACT);
+            //this.scene.player.panel = new Panel(this.scene);
+        }*/
+        return this.troglodytes[this.troglodytes.length - 1];
+    }
+
+    removeOtherPlayer(_id) {
+        for (let i = this.troglodytes.length - 1; i >= 0; i--) {
+            if (this.troglodytes[i].id === _id) {
+                this.troglodytes[i].destroy();
+                this.troglodytes.splice(i, 1);
+            }
+        }
     }
 
     calculateDesert(){
@@ -152,6 +180,14 @@ export default class LevelDesert00{
     }
 
     destroy() {
+        for(let t of this.troglodytes){
+            t.destroy();
+        }
 
+        for(let d of this.desert){
+            d.destroy();
+        }
+
+        this.sun.destroy();
     }
 }

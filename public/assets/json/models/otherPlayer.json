@@ -1,0 +1,69 @@
+{
+    "name": "Character OtherPlayer",
+    "quadData": [
+        {
+            "type": "quad",
+            "texture": "sprTroglodyte00",
+            "frame": 0,
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "points": [
+                {
+                    "x": 12,
+                    "y": -32,
+                    "z": 0
+                },
+                {
+                    "x": -12,
+                    "y": -32,
+                    "z": 0
+                },
+                {
+                    "x": -12,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 12,
+                    "y": 0,
+                    "z": 0
+                }
+            ]
+        }
+    ],
+    "collisionData": [
+        {
+            "type": "collisionQuad",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "points": [
+                {
+                    "x": -12,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 12,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 12,
+                    "y": -32,
+                    "z": 0
+                },
+                {
+                    "x": -12,
+                    "y": -32,
+                    "z": 0
+                }
+            ]
+        }
+    ]
+}
