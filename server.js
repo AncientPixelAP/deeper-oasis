@@ -56,7 +56,8 @@ io.on("connection", socket => {
             playersData: gameData.players,
             objectsData: {
                 stoneStacks: gameData.stoneStacks
-            }
+            },
+            oasisData: gameData.oasis
         });
     });
 

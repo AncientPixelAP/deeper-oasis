@@ -26,12 +26,13 @@ export default class LevelDesert00{
                 y: 0.001,
                 z: 0.002
             },
-            gridSize: 64
+            gridSize: 64,
+            viewDist: 24
         }
         this.desert = [];
         for(let yy = -32 ; yy < 32 ; yy++){
             for (let xx = -32; xx < 32; xx++){
-                if(Phaser.Math.Distance.Between(0, 0, xx, yy) < 24){
+                if(Phaser.Math.Distance.Between(0, 0, xx, yy) < this.desertParams.viewDist){
                     this.desert.push(this.scene.geometryController.loadModel("desertTile", "modDesertTile", {
                         x: xx * this.desertParams.gridSize,
                         y: 0,
@@ -41,13 +42,18 @@ export default class LevelDesert00{
             }
         }
 
-        this.calculateDesert();
-
         this.sun = this.scene.add.sprite(0, 0, "sprSun00");
         this.sun.depth = -10000;
 
+        this.oasis = {
+            radius: 2,
+        }
+
         this.troglodytes = [];
         this.stoneStacks = [];
+        this.trees = [];
+
+        this.calculateDesert();
     }
 
     update(){
@@ -87,6 +93,30 @@ export default class LevelDesert00{
         }
 
         this.calculateSun({x: 0, y: 0, z: 0}, this.scene.player.dir);
+    }
+
+    checkForTree(_pos){
+        let found = false;
+        for(let t of this.trees){
+            if(t.pos.x === _pos.x){
+                if(t.pos.z === _pos.z){
+                    found = true;
+                    return found;
+                }
+            }
+        }
+        return found;
+    }
+    
+    addTree(_data){
+        this.trees.push(this.scene.geometryController.loadModel("tree_" + String(this.stoneStacks.length), "modTree", {
+                x: _data.pos.x,
+                y: _data.pos.y,
+                z: _data.pos.z
+            })
+        );
+        this.trees[this.trees.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
+        this.trees[this.trees.length - 1].quadData[0].setTexture(_data.texture);
     }
 
     addStoneStack(_data){
@@ -149,6 +179,37 @@ export default class LevelDesert00{
                     rn = -1;
                     hh = 0;
                     tex = "sprDesert01";
+                }
+
+                //check oasis   
+                //this.desertParams.viewDist
+                let dd = Phaser.Math.Distance.Between(0, 0, xx, zz);
+                if(dd < 16 * this.desertParams.gridSize){
+                    let fac = ((16 * this.desertParams.gridSize) / dd);
+                    rn /= fac;
+                    hh /= fac;
+                    if(dd < 7 * this.desertParams.gridSize){
+                        //tex = "sprDesert00";
+                    }
+                    if(dd < this.oasis.radius * this.desertParams.gridSize){
+                        tex = "sprOasis00";
+
+                        if (this.checkForTree({ x: Math.floor(xx), y: Math.floor(yy), z: Math.floor(zz)}) === false){
+                            let nv = this.noise.simplex3(xx, yy, zz);
+                            let variety = Math.floor(Math.abs(nv) * 4);
+                            this.addTree({
+                                pos: {
+                                    x: Math.floor(xx),
+                                    y: Math.floor(yy),
+                                    z: Math.floor(zz)
+                                },
+                                texture: "sprTree0" + String(variety)
+                            })
+                        };
+                    }
+                    if (dd < 1 * this.desertParams.gridSize) {
+                        tex = "sprWater00";
+                    }
                 }
 
                 p.y = ((rn + (hh * hh)) * this.desertParams.duneFactor) * 64;

@@ -65,11 +65,6 @@ export default class DataQuad{
                 this.quads[0].setBottomRight(this.screenCoords[2].x, this.screenCoords[2].y);
                 this.quads[0].setBottomLeft(this.screenCoords[3].x, this.screenCoords[3].y);
                 this.quads[0].depth = this.depth;
-                /*let c = Phaser.Display.Color.GetColor(this.shade, this.shade, this.shade);
-                this.quads[0].topLeftColor = c;
-                this.quads[0].topRightColor = c;
-                this.quads[0].bottomLeftColor = c;
-                this.quads[0].bottomRightColor = c;*/
             }else{
                 this.quads[0].setTopLeft(this.screenCoords[0].x, this.screenCoords[0].y);
                 this.quads[0].setTopRight(this.sc01.x, this.sc01.y);
@@ -148,6 +143,7 @@ export default class DataQuad{
         let sumZ = 0;
 
         let outsideScreenSafe = false;
+        let cull = false;
 
         //calculate the quads point in 3d seen from the camera
         for(let [i, p] of this.points.entries()){
@@ -172,6 +168,16 @@ export default class DataQuad{
             nx = outXY[0];
             ny = outXY[1];
             nz = outXY[2];
+
+            /*if(nz < 0.1){
+                nz = 0.1;
+            }*/
+            if(nz < -100){
+                cull = true;
+            }
+            if(nz < 0){
+                nz *= 0.01;
+            }
             let nzMod = nz + 10;
 
             let zoom = 400;//2.5 - 0.01
@@ -199,10 +205,10 @@ export default class DataQuad{
         }
         this.depth = sumZ * -0.25;
         //this.depth = recZ*-1;
-        this.shade = Math.max(0, 255 - ((recZ + 0) * 0.25));
+        this.shade = Math.max(0, 255 - ((recZ + 0) * 0.125));
 
         if(this.type !== "collisionQuad"){
-            if(this.depth >= 0){//near clipping plane could be at -25 for example
+            if (cull === true) {//if(this.depth >= 0 || cull === true){//near clipping plane could be at -25 for example
                 if (this.quads.length > 0) {
                     this.clearQuads();
                 }

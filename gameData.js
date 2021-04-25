@@ -5,6 +5,10 @@ class GameData {
         this.players = [];
         this.stoneStacks = [];
 
+        this.oasis = {
+            radius: 2
+        }
+
         this.states = {
             grow: 0,
             wait: 1,
