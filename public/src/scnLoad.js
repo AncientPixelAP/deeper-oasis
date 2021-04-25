@@ -18,10 +18,20 @@ export default class ScnLoad extends Phaser.Scene {
         //this.load.audio('decisionLeft', 'audio/decision.wav');
         //this.load.atlas("tilesGrass", "sprites/tiles/grassDirt.png", "sprites/tiles/tilesGround_atlas.json");
 
+        //editor debug
+        this.load.image("sprDebugTexture", "sprites/sprDebugTexture.png");
+        this.load.image("sprDebugQuadPoint0", "sprites/sprDebugQuadPoint0.png");
+        this.load.image("sprDebugQuadPoint1", "sprites/sprDebugQuadPoint1.png");
+        this.load.image("sprDebugQuadPoint2", "sprites/sprDebugQuadPoint2.png");
+        this.load.image("sprDebugQuadPoint3", "sprites/sprDebugQuadPoint3.png");
+        this.load.image("sprDebugQuadPoint4", "sprites/sprDebugQuadPoint4.png");
+
         this.load.image("sprDesert00", "sprites/sprDesert00.png");
         this.load.image("sprDesert01", "sprites/sprDesert01.png");
         this.load.image("sprWater00", "sprites/sprWater00.png");
         this.load.image("sprOasis00", "sprites/sprOasis00.png");
+
+        this.load.image("sprMarble00", "sprites/sprMarble00.png");
 
         this.load.image("sprSun00", "sprites/sprSun00.png");
         this.load.image("sprTroglodyte00", "sprites/sprTroglodyte00.png");
