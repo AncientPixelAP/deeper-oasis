@@ -675,6 +675,9 @@ export default class Scn3d extends Phaser.Scene {
     fillInputs(){
         let gamepad = null;
         gamepad = navigator.getGamepads()[Math.max(0, gamepadsConnected - 1)];
+        if(gamepad === undefined){
+            gamepad = null;
+        }
 
         //FORWARDS-BACKWARDDS
         INPUTS.stickLeft.vertical = 0;
