@@ -29,6 +29,7 @@ let tick = setInterval(() => {
 
         io.to(p.id).emit("synchUpdate", {
             playersData: gameData.players,
+            oasisData: gameData.oasis
         });
     }
 }, 100);
@@ -55,7 +56,9 @@ io.on("connection", socket => {
             you: gameData.players[gameData.players.length-1],
             playersData: gameData.players,
             objectsData: {
-                stoneStacks: gameData.stoneStacks
+                stoneStacks: gameData.stoneStacks,
+                trees: gameData.trees,
+                scrolls: gameData.scrolls
             },
             oasisData: gameData.oasis
         });
@@ -98,10 +101,51 @@ io.on("connection", socket => {
             });
         }
     });*/
+    socket.on("commitLetter", (_data) => {
+        gameData.refreshLetter();
+        io.to(id).emit("giveSeed", {});
+    });
+
     socket.on("spawnStoneStack", (_data) => {
-        gameData.addStoneStack(id, _data);
+        gameData.spawnStoneStack(id, _data);
         for (let p of gameData.players) {
-            io.to(p.id).emit("spawnStoneStack", _data);
+            io.to(p.id).emit("spawnStoneStack", gameData.stoneStacks[gameData.stoneStacks.length-1]);
+        }
+    });
+    socket.on("removeStoneStack", (_data) => {
+        gameData.removeStoneStack(_data);
+        for (let p of gameData.players) {
+            io.to(p.id).emit("removeStoneStack", _data);
+        }
+    });
+
+    socket.on("spawnScroll", (_data) => {
+        if(gameData.checkForScroll(_data) === false){
+            gameData.spawnScroll(id, _data);
+            for (let p of gameData.players) {
+                io.to(p.id).emit("spawnScroll", gameData.scrolls[gameData.scrolls.length - 1]);
+            }
+        }
+    });
+    socket.on("removeScroll", (_data) => {
+        gameData.removeScroll(_data);
+        for(let p of gameData.players){
+            io.to(p.id).emit("removeScroll", _data);
+        }
+    });
+
+    socket.on("spawnTree", (_data) => {
+        if (gameData.checkForTree(_data) === false) {
+            gameData.spawnTree(id, _data);
+            for (let p of gameData.players) {
+                io.to(p.id).emit("spawnTree", gameData.trees[gameData.trees.length - 1]);
+            }
+        }
+    });
+    socket.on("removeTree", (_data) => {
+        gameData.removeTree(_data);
+        for (let p of gameData.players) {
+            io.to(p.id).emit("removeTree", _data);
         }
     });
 

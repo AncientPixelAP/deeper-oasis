@@ -80,9 +80,10 @@ export default class Scn3d extends Phaser.Scene {
         this.hand.setMouseLock(true);
 
         this.player = new Player3d(this);
-        this.player.pos.x = 1;
+        let a = Math.random() * (Math.PI * 2);
+        this.player.pos.x = Math.sin(a) * 32;
         this.player.pos.y = -32;
-        this.player.pos.z = 2;
+        this.player.pos.z = Math.cos(a) * 32;
 
         this.editor = new Editor(this);
 
@@ -109,7 +110,34 @@ export default class Scn3d extends Phaser.Scene {
 
         socket.on("spawnStoneStack", (_data) => {
             this.level.addStoneStack(_data);
-        })
+        });
+        socket.on("removeStoneStack", (_data) => {
+            this.level.removeStoneStack(_data.id);
+        });
+
+        socket.on("spawnTree", (_data) => {
+            this.level.addTree(_data);
+        });
+        socket.on("removeTree", (_data) => {
+            this.level.removeTree(_data.id);
+        });
+
+        socket.on("spawnScroll", (_data) => {
+            if(_data.taken === false){
+                this.level.addScroll(_data);
+            }
+        });
+        socket.on("removeScroll", (_data) => {
+            this.level.removeScroll(_data.id);
+        });
+
+        socket.on("giveSeed", (_data) => {
+            this.player.setHeldItem("sprSeed00", {
+                text: "",
+                itemType: "seed",
+                hintPic: "sprSeedSymbol00"
+            })
+        });
 
         socket.on("getPlayers", (_data) => {
             console.log(_data);
@@ -117,7 +145,13 @@ export default class Scn3d extends Phaser.Scene {
             this.playersData = _data.playersData;
             this.objectsData = _data.objectsData;
             for(let s of this.objectsData.stoneStacks){
-                this.level.addStoneStack(s.data);
+                this.level.addStoneStack(s);
+            }
+            for (let t of this.objectsData.trees) {
+                this.level.addTree(t);
+            }
+            for (let s of this.objectsData.scrolls) {
+                this.level.addScroll(s);
             }
             this.synchronize();
         });
@@ -125,6 +159,11 @@ export default class Scn3d extends Phaser.Scene {
         socket.on("synchUpdate", (_data) => {
             //console.log(_data);
             this.playersData = _data.playersData;
+            this.level.oasis.radius = _data.oasisData.radius;
+            if(this.level.oasis.nextLetter !== _data.oasisData.nextLetter){
+                this.level.oasis.nextLetter = _data.oasisData.nextLetter;
+                this.level.oasis.nextLetterModel.quadData[0].setTexture("sprLetter" + String(this.level.oasis.nextLetter));
+            }
 
             this.synchronize();
         });
@@ -179,16 +218,26 @@ export default class Scn3d extends Phaser.Scene {
 
                     let model = this.geometryController.getModelById(this.modelName = hits[hits.length - 1].modelId);
                     if (model.interactable === true){
-                        this.player.setHintText("click to use/talk");
-                        this.player.setUseBox(model.getScreenBounds());
-                    }else{
-                        this.player.setHintText("");
-                        this.player.clearUseBox();
-                    }
+                        if (eud.distance([this.player.pos.x, this.player.pos.y, this.player.pos.z], [model.pos.x, model.pos.y, model.pos.z]) < 48){
+                            //this.player.setHintText(model.data.text !== undefined ? model.data.text : "");
+                            if(model.data.hintPic !== undefined){
+                                this.player.setHintPic(model.data.hintPic, 1);
+                            }else{
+                                this.player.setHintPic("sprDebugTexture", 0);
+                            }
+                            //this.player.setUseBox(model.getScreenBounds());
 
-                    if (this.hand.justReleased) {
-                        //let model = this.geometryController.getModelById(this.modelName = hits[hits.length - 1].modelId);
-                        model.interact();
+                            if (this.hand.justReleased || INPUTS.btnA.justReleased) {
+                                //let model = this.geometryController.getModelById(this.modelName = hits[hits.length - 1].modelId);
+                                model.interact();
+                            }
+                        }else{
+                            this.player.setHintPic("sprDebugTexture", 0);
+                        }
+                    }else{
+                        this.player.setHintPic("sprDebugTexture", 0);
+                        this.player.setHintText("");
+                        //this.player.clearUseBox();
                     }
                 }
 
@@ -222,7 +271,9 @@ export default class Scn3d extends Phaser.Scene {
             socket.emit("updatePlayer", {
                 id: this.you.id,
                 pos: this.player.pos,
-                dir: this.player.dir
+                dir: this.player.dir,
+                asset: this.player.asset,
+                heldItemData: this.player.heldItemData
             });
         }
     }
@@ -269,6 +320,8 @@ export default class Scn3d extends Phaser.Scene {
     }
 
     gameControls(){
+        let isMoving = false;
+
         this.keyboardLook();
         if(this.player.mode === PLAYERMODE.LOOK){
             if(this.hand.mouselock === false){
@@ -288,17 +341,41 @@ export default class Scn3d extends Phaser.Scene {
         if (Math.abs(INPUTS.stickLeft.horizontal) > 0.1) {
             toPos.z -= (Math.cos(this.player.dir.yaw + HALFPI) * INPUTS.stickLeft.horizontal) * this.player.spd.normal;
             toPos.x += (Math.sin(this.player.dir.yaw + HALFPI) * INPUTS.stickLeft.horizontal) * this.player.spd.normal;
+            isMoving = true;
         }
         if (Math.abs(INPUTS.stickLeft.vertical) > 0.1) {
             toPos.z -= (Math.cos(this.player.dir.yaw) * INPUTS.stickLeft.vertical) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
             toPos.x += (Math.sin(this.player.dir.yaw) * INPUTS.stickLeft.vertical) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
+            isMoving = true;
         }
 
+        if(isMoving === true){
+            this.player.asset = "sprTroglodyte00";
+        }else{
+            this.player.asset = "sprTroglodyte01";
+        }
+        if (Math.abs(this.player.vel.y) > 1) {
+            this.player.asset = "sprTroglodyte02";
+        }
+
+        //JUMP
         if (INPUTS.btnShoulderRight.pressed) {
             //this.player.pos.y -= 1;
+            if (this.player.vel.y === 0){
+                this.player.vel.y = -2;
+                this.player.pos.y += this.player.vel.y;
+            }
         }
         if (INPUTS.btnShoulderLeft.pressed) {
             //this.player.pos.y += 1;
+        }
+
+        if(INPUTS.btnB.justReleased === true){
+            this.level.tryRemoveStoneStack({
+                x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
+                y: this.player.pos.y + this.player.eyeHeight,
+                z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
+            });
         }
 
         let returnColl = [];
@@ -343,41 +420,60 @@ export default class Scn3d extends Phaser.Scene {
         ]
 
         //try to find stoeckchen position
-        if (INPUTS.btnA.justReleased) {
-            checkColl.push({
-                pos: {
-                    x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
-                    y: this.player.pos.y + this.player.eyeHeight,
-                    z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
-                },
-                dir: {
-                    x: 0,
-                    y: 1,
-                    z: 0
-                },
-                hit: []
-            });
-            /*socket.emit("spawnStoneStack", {
-                pos: {
-                    x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
-                    y: this.player.pos.y,
-                    z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
-                }
-            });*/
+        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false) {
+            //if (this.player.heldItemData.itemType === "letter" || this.player.heldItemData.itemType === "seed"){
+                checkColl.push({
+                    pos: {
+                        x: this.player.pos.x + Math.sin(this.player.dir.yaw) * -16,
+                        y: this.player.pos.y + this.player.eyeHeight,
+                        z: this.player.pos.z - Math.cos(this.player.dir.yaw) * -16
+                    },
+                    dir: {
+                        x: 0,
+                        y: 1,
+                        z: 0
+                    },
+                    hit: []
+                });
+            //}
         }
 
         returnColl = this.geometryController.update(checkColl);
         
         //really place stoeckchen now
-        if (INPUTS.btnA.justReleased) {
-            if (returnColl[3].hit.length > 0) {
-                socket.emit("spawnStoneStack", {
-                    pos: {
-                        x: returnColl[3].hit[0].pt[0],
-                        y: returnColl[3].hit[0].pt[1],
-                        z: returnColl[3].hit[0].pt[2]
+        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false) {
+            if (this.player.heldItemData.itemType === "letter") {
+                //commit letter to server if right
+                if (Phaser.Math.Distance.Between(0, 0, this.player.pos.x, this.player.pos.z) < 64) {
+                    //if (this.player.heldItemData.letter === this.level.oasis.nextLetter) {
+                        socket.emit("commitLetter", {});
+                    //}
+                } else {
+                    //place a orientational stone stack
+                    if (returnColl[3].hit.length > 0) {
+                        socket.emit("spawnStoneStack", {
+                            pos: {
+                                x: returnColl[3].hit[0].pt[0],
+                                y: returnColl[3].hit[0].pt[1],
+                                z: returnColl[3].hit[0].pt[2]
+                            }
+                        });
                     }
-                });
+                    this.player.setHeldItem("sprNothing", { itemType:"none", text: "", hintPic: "sprNothing"});
+                }
+            } else if (this.player.heldItemData.itemType === "seed"){
+                //planting a seed on near player position
+                //todo check if tree is near an eligable position
+                if (returnColl[3].hit.length > 0) {
+                    socket.emit("spawnTree", {
+                        pos: {
+                            x: returnColl[3].hit[0].pt[0],
+                            y: returnColl[3].hit[0].pt[1],
+                            z: returnColl[3].hit[0].pt[2]
+                        }
+                    });
+                }
+                this.player.setHeldItem("sprNothing", { itemType: "none", text: "", hintPic: "sprNothing" });
             }
         }
 
@@ -399,11 +495,13 @@ export default class Scn3d extends Phaser.Scene {
                 if(dist <= this.player.stepHeight){
                     this.player.vel.y = 0;
                     this.player.pos.y = nearestHit.pt[1];
+                    //this.player.asset = "sprTroglodyte00";
                 }else{
                     if (this.player.vel.y < this.player.gravity.terminal) {
                         this.player.vel.y += this.player.gravity.y;
                     }
                     this.player.pos.y += this.player.vel.y;
+                    //this.player.asset = "sprTroglodyte02";
                 }
             }else{
                 nearestHit.model.updateTrigger();
@@ -533,6 +631,13 @@ export default class Scn3d extends Phaser.Scene {
         socket.off("getPlayers");
         socket.off("synchUpdate");
         socket.off("kickPlayer");
+        socket.off("spawnTree");
+        socket.off("removeTree");
+        socket.off("spawnStoneStack");
+        socket.off("removeStoneStack");
+        socket.off("spawnScroll");
+        socket.off("removeScroll");
+        socket.off("giveSeed");
 
         this.scene.start("ScnMain");
     }
@@ -546,6 +651,12 @@ export default class Scn3d extends Phaser.Scene {
                         found = true;
                         op.data = d.data;
                         op.model.jumpToPosition(d.data.pos);
+                        op.model.quadData[0].setTexture(d.data.asset);
+                        op.model.data = {
+                            text: d.data.heldItemData.text,
+                            itemType: d.data.heldItemData.itemType,
+                            hintPic: d.data.heldItemData.hintPic
+                        }
                     }
                 }
 
@@ -682,7 +793,7 @@ export default class Scn3d extends Phaser.Scene {
             }
         }
         //B
-        if (this.keys.escape.isDown || (gamepad !== null ? gamepad.buttons[1].pressed : false)) {
+        if (this.keys.backspace.isDown || (gamepad !== null ? gamepad.buttons[1].pressed : false)) {
             if (INPUTS.btnB.pressed === false) {
                 INPUTS.btnB.justPressed = true;
                 INPUTS.btnB.pressed = true;

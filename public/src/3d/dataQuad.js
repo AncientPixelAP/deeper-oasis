@@ -212,7 +212,7 @@ export default class DataQuad{
                 if (this.quads.length > 0) {
                     this.clearQuads();
                 }
-            }else if(this.depth < 0){
+            }else{// if(this.depth < 0){
                 if (this.quads.length === 0) {
                     this.createQuad();
                 }
@@ -373,7 +373,12 @@ export default class DataQuad{
     setTexture(_tex){
         this.texture = _tex;
         for(let q of this.quads){
+            let saveUv = [];
+            for(let c of q.uv){
+                saveUv.push(c);
+            }
             q.setTexture(this.texture, this.frame);
+            q.uv = saveUv;
         }
     }
 

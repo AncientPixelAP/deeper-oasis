@@ -7,18 +7,22 @@ export default class GeometryController{
         this.geometryData = null;
         this.geometry = [];
         this.models = [];
+        this.collisionDistance = 128;
+        this.drawDistance = 1536;
     }
 
     update(_collCheckArr){
         for (let m of this.models) {
             m.update();
 
-            for (let q of m.collisionData){
-                for(let c of _collCheckArr){
-                    let hitData = this.collide(q, c);
-                    if(hitData.pt !== null){
-                        hitData.model = m;
-                        c.hit.push(hitData);
+            if (Phaser.Math.Distance.Between(m.pos.x, m.pos.z, this.scene.player.pos.x, this.scene.player.pos.z) < this.collisionDistance){
+                for (let q of m.collisionData){
+                    for(let c of _collCheckArr){
+                        let hitData = this.collide(q, c);
+                        if(hitData.pt !== null){
+                            hitData.model = m;
+                            c.hit.push(hitData);
+                        }
                     }
                 }
             }
@@ -28,7 +32,10 @@ export default class GeometryController{
 
     draw(_from, _dir){
         for(let m of this.models){
-            m.draw(_from, _dir);
+            m.flags.draw = false;
+            if (Phaser.Math.Distance.Between(m.pos.x, m.pos.z, this.scene.player.pos.x, this.scene.player.pos.z) < this.drawDistance){
+                m.draw(_from, _dir);
+            }
         }
     }
 

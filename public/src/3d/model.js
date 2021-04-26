@@ -75,6 +75,11 @@ export default class Model{
             mode: 0
         }
         this.debug.collisionGraphics.depth = 10000;
+
+        this.flags = {
+            draw: false,
+            drawn: false
+        }
     }
 
     update(){
@@ -124,6 +129,14 @@ export default class Model{
             this.trigger.keep = 0;
             this.trigger.triggered = false;
             this.trigger.onExit();
+        }
+
+        //clear quads and stop drawing if not in view but have been previously
+        if(this.flags.drawn === true && this.flags.draw === false){
+            this.flags.drawn = false;
+            for (let q of this.quadData){
+                q.clearQuads();
+            }
         }
     }
 
@@ -199,6 +212,8 @@ export default class Model{
     }
 
     draw(_from, _dir){
+        this.flags.drawn = true;
+        this.flags.draw = true;
         for (let q of this.quadData){
             if(this.debug.mode === DRAWMODE.D3D){
                 q.calculate3d(_from, _dir);

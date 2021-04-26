@@ -14,6 +14,18 @@ export default class LevelDesert00{
         //let x, y, z = 0;
         //let rn = this.noise.simplex3(x, y, z);
 
+        this.oasis = {
+            radius: 3,
+            tiles: [],
+            nextLetter: 0,
+            nextLetterModel: this.scene.geometryController.loadModel("nextLetter", "modNextLetter", {
+                x: 0,
+                y: 0,
+                z: 0
+            })
+        }
+        this.oasis.nextLetterModel.setDrawMode(DRAWMODE.BILLBOARD);
+
         this.desertPos = {
             x: 0,
             y: 0,
@@ -38,6 +50,13 @@ export default class LevelDesert00{
                         y: 0,
                         z: yy * this.desertParams.gridSize
                     }));
+                    if(Phaser.Math.Distance.Between(0, 0, xx, yy) < 3){
+                        this.oasis.tiles.push({
+                            x: this.desert[this.desert.length - 1].pos.x,
+                            y: 0,
+                            z: this.desert[this.desert.length - 1].pos.z
+                        })
+                    }
                 }
             }
         }
@@ -45,15 +64,15 @@ export default class LevelDesert00{
         this.sun = this.scene.add.sprite(0, 0, "sprSun00");
         this.sun.depth = -10000;
 
-        this.oasis = {
-            radius: 2,
-        }
+        
 
         this.troglodytes = [];
         this.stoneStacks = [];
         this.trees = [];
+        this.scrolls = [];
 
         this.calculateDesert();
+        this.spawnFirstTrees();
     }
 
     update(){
@@ -92,7 +111,23 @@ export default class LevelDesert00{
             this.calculateDesert();
         }
 
-        this.calculateSun({x: 0, y: 0, z: 0}, this.scene.player.dir);
+        this.calculateSun({ x: 0, y: 0, z: 0 }, this.scene.player.dir); 
+    }
+
+    tryAddTree(_pos, _rn, _hh){
+        let toY = ((_rn + (_hh * _hh)) * this.desertParams.duneFactor) * 64;
+        if (this.checkForTree({ x: Math.floor(_pos.x), y: Math.floor(toY), z: Math.floor(_pos.z) }) === false) {
+            let nv = this.noise.simplex3(_pos.x, _pos.y, _pos.z);
+            let variety = Math.floor(Math.abs(nv) * 4);
+            this.addTree({
+                pos: {
+                    x: Math.floor(_pos.x),
+                    y: Math.floor(toY),
+                    z: Math.floor(_pos.z)
+                },
+                texture: "sprTree0" + String(variety)
+            })
+        };
     }
 
     checkForTree(_pos){
@@ -109,24 +144,147 @@ export default class LevelDesert00{
     }
     
     addTree(_data){
-        this.trees.push(this.scene.geometryController.loadModel("tree_" + String(this.stoneStacks.length), "modTree", {
+        let nv = this.noise.simplex3(_data.pos.x, _data.pos.y, _data.pos.z);
+        let variety = Math.floor(Math.abs(nv) * 4);
+        this.trees.push(this.scene.geometryController.loadModel(_data.id, "modTree", {
                 x: _data.pos.x,
                 y: _data.pos.y,
                 z: _data.pos.z
             })
         );
         this.trees[this.trees.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
-        this.trees[this.trees.length - 1].quadData[0].setTexture(_data.texture);
+        this.trees[this.trees.length - 1].quadData[0].setTexture("sprTree0" + String(variety));
+
+        let goodPosition = false;
+        for (let i = this.oasis.tiles.length - 1; i >= 0; i--) {
+            let t = this.oasis.tiles[i];
+            if (Phaser.Math.Distance.Between(t.x, t.z, _data.pos.x, _data.pos.z) < this.desertParams.gridSize){
+                //oasis tile already near tree position
+                goodPosition = true;
+                for(let d of this.desert){
+                    if (Phaser.Math.Distance.Between(_data.pos.x, _data.pos.z, d.pos.x, d.pos.z) < this.desertParams.gridSize * 1.5) {
+                        //grwo new desert near tree
+                        let arr = this.oasis.tiles.filter((el) => el.x === d.pos.x && el.z === d.pos.z);
+                        if(arr.length === 0){
+                            this.oasis.tiles.push({
+                                x: d.pos.x,
+                                y: 0,
+                                z: d.pos.z
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        if(goodPosition === false){
+            //no good for tree, to far away
+            socket.emit("removeTree", {id: _data.id});
+        }
+        //console.log(this.trees.length);
+    }
+    tryRemoveTree(_pos) {
+        for (let s of this.trees) {
+            if (Phaser.Math.Distance.Between(_pos.x, _pos.z, s.pos.x, s.pos.z) < 48) {
+                socket.emit("removeTree", {
+                    id: s.id,
+                    pos: {
+                        x: s.pos.x,
+                        y: s.pos.y,
+                        z: s.pos.z
+                    }
+                });
+            }
+        }
+    }
+    removeTree(_id) {
+        lbl: for (let i = this.trees.length - 1; i >= 0; i--) {
+            if (this.trees[i].id === _id) {
+                this.trees[i].destroy();
+                this.trees.splice(i, 1);
+                break lbl;
+            }
+        }
     }
 
     addStoneStack(_data){
-        this.stoneStacks.push(this.scene.geometryController.loadModel("stoneStack_" + String(this.stoneStacks.length), "modStoneStack", {
+        this.stoneStacks.push(this.scene.geometryController.loadModel(_data.id, "modStoneStack", {
                 x: _data.pos.x,
                 y: _data.pos.y,
                 z: _data.pos.z
             })
         );
         this.stoneStacks[this.stoneStacks.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
+    }
+    tryRemoveStoneStack(_pos){
+        for(let s of this.stoneStacks){
+            if (Phaser.Math.Distance.Between(_pos.x, _pos.z, s.pos.x, s.pos.z) < 48){
+                socket.emit("removeStoneStack", {
+                    id: s.id,
+                    pos: {
+                        x: s.pos.x,
+                        y: s.pos.y,
+                        z: s.pos.z
+                    }
+                });
+            }
+        }
+    }
+    removeStoneStack(_id){
+        lbl:for(let i = this.stoneStacks.length-1 ; i >= 0 ; i--){
+            if(this.stoneStacks[i].id === _id){
+                this.stoneStacks[i].destroy();
+                this.stoneStacks.splice(i, 1);
+                break lbl;
+            }
+        }
+    }
+
+    addScroll(_data) {
+        if(_data.taken === false){
+            this.scrolls.push(this.scene.geometryController.loadModel(_data.id, "modScroll", {
+                    x: _data.pos.x,
+                    y: _data.pos.y,
+                    z: _data.pos.z
+                })
+            );
+            this.scrolls[this.scrolls.length - 1].interactable = true;
+            this.scrolls[this.scrolls.length - 1].data = {
+                letter: _data.letter,
+                text: "pick up",
+                itemType: "letter",
+                hintPic: "sprLetter"+String(_data.letter)
+            }
+            let _this = this.scrolls[this.scrolls.length - 1];
+            this.scrolls[this.scrolls.length - 1].interact = () => {
+                this.scene.player.setHeldItem("sprLetter"+String(_data.letter), _this.data)
+                this.scene.level.tryRemoveScroll(this.scene.player.pos);
+            }
+            this.scrolls[this.scrolls.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
+            //console.log(this.scrolls.length);
+        }
+    }
+    tryRemoveScroll(_pos) {
+        for (let s of this.scrolls) {
+            if (Phaser.Math.Distance.Between(_pos.x, _pos.z, s.pos.x, s.pos.z) < 48) {
+                socket.emit("removeScroll", {
+                    id: s.id,
+                    pos: {
+                        x: s.pos.x,
+                        y: s.pos.y,
+                        z: s.pos.z
+                    }
+                });
+            }
+        }
+    }
+    removeScroll(_id) {
+        lbl: for (let i = this.scrolls.length - 1; i >= 0; i--) {
+            if (this.scrolls[i].id === _id) {
+                this.scrolls[i].destroy();
+                this.scrolls.splice(i, 1);
+                break lbl;
+            }
+        }
     }
 
     addOtherPlayer(_id, _data){
@@ -138,10 +296,16 @@ export default class LevelDesert00{
             })
         );
         this.troglodytes[this.troglodytes.length-1].setDrawMode(DRAWMODE.BILLBOARD);
-        /*this.troglodytes[this.troglodytes.length - 1].interactable = true;
-        this.troglodytes[this.troglodytes.length - 1].interact = () => {
+        this.troglodytes[this.troglodytes.length - 1].interactable = true;
+        /*this.troglodytes[this.troglodytes.length - 1].interact = () => {
             //this.scene.player.setMode(PLAYERMODE.INTERACT);
             //this.scene.player.panel = new Panel(this.scene);
+        }*/
+        /*let _this = this.troglodytes[this.troglodytes.length - 1];
+        this.troglodytes[this.troglodytes.length - 1].interact = () => {
+            //console.log(_this.data)
+            this.scene.player.setHeldItem("sprLetter" + String(variety), _this.data)
+            this.scene.level.tryRemoveScroll(this.scene.player.pos);
         }*/
         return this.troglodytes[this.troglodytes.length - 1];
     }
@@ -156,14 +320,30 @@ export default class LevelDesert00{
     }
 
     calculateDesert(){
+        //console.log(this.oasis.tiles.length)
         for (let d of this.desert) {
             let tex = "sprDesert00";
             let xx, yy, zz, rn, hh = 0;
+
+            //paint over all oasis tiles
+            for(let t of this.oasis.tiles){
+                if(Phaser.Math.Distance.Between(t.x, t.z, d.pos.x, d.pos.z) < 1){
+                    tex = "sprOasis00";
+                }
+            }
+            //water pond in the middle
+            if (Phaser.Math.Distance.Between(0, 0, d.pos.x, d.pos.z) < 1) {
+                tex = "sprWater00";
+            }
+
             for (let [i,p] of d.quadData[0].points.entries()) {
                 xx = p.x + d.pos.x
                 yy = 0 + d.pos.y
                 zz = p.z + d.pos.z
+
+                let isPlateau = false;
                 
+                //inital landscape
                 rn = this.noise.simplex3(xx * this.desertParams.resolution.x, yy * this.desertParams.resolution.y, zz * this.desertParams.resolution.z);
                 hh = this.noise.simplex3(xx * 0.001, yy * 0.001, zz * 0.001);
 
@@ -172,6 +352,7 @@ export default class LevelDesert00{
                     rn = -5;
                     hh = 0;
                     tex = "sprDesert01";
+                    isPlateau = true; //TODO maaybe remove if it hurts the temple generation
                 }
 
                 //rare plateus
@@ -179,36 +360,29 @@ export default class LevelDesert00{
                     rn = -1;
                     hh = 0;
                     tex = "sprDesert01";
+                    isPlateau = true;
+                    if (Math.floor(this.noise.simplex3(zz * 1.1, xx, 0) * 10) >= 8){
+                        //add scroll on floor
+                        //this.tryAddTree({x: xx, y:yy, z:zz}, rn, hh);
+                        socket.emit("spawnScroll", {
+                            pos: {
+                                x: xx,
+                                y: Math.floor((rn * this.desertParams.duneFactor) * 64),
+                                z: zz
+                            }
+                        });
+                    }
                 }
 
-                //check oasis   
-                //this.desertParams.viewDist
-                let dd = Phaser.Math.Distance.Between(0, 0, xx, zz);
-                if(dd < 16 * this.desertParams.gridSize){
-                    let fac = ((16 * this.desertParams.gridSize) / dd);
-                    rn /= fac;
-                    hh /= fac;
-                    if(dd < 7 * this.desertParams.gridSize){
-                        //tex = "sprDesert00";
-                    }
-                    if(dd < this.oasis.radius * this.desertParams.gridSize){
-                        tex = "sprOasis00";
-
-                        if (this.checkForTree({ x: Math.floor(xx), y: Math.floor(yy), z: Math.floor(zz)}) === false){
-                            let nv = this.noise.simplex3(xx, yy, zz);
-                            let variety = Math.floor(Math.abs(nv) * 4);
-                            this.addTree({
-                                pos: {
-                                    x: Math.floor(xx),
-                                    y: Math.floor(yy),
-                                    z: Math.floor(zz)
-                                },
-                                texture: "sprTree0" + String(variety)
-                            })
-                        };
-                    }
-                    if (dd < 1 * this.desertParams.gridSize) {
-                        tex = "sprWater00";
+                
+                //flatten terrain a bit in start area
+                let pd = Phaser.Math.Distance.Between(0, 0, xx, zz);
+                if (pd <= (16) * this.desertParams.gridSize) {
+                    let fac = ((16 * this.desertParams.gridSize) / pd);
+                    if (isPlateau === false) {
+                        rn /= fac;
+                        hh /= fac;
+                        rn += (fac / this.desertParams.gridSize);
                     }
                 }
 
@@ -216,6 +390,22 @@ export default class LevelDesert00{
                 d.collisionData[0].points[i].y = p.y;
             }
             d.quadData[0].setTexture(tex);
+        }
+    }
+
+    spawnFirstTrees(){
+        for (let d of this.desert) {
+            for(let p of d.quadData[0].points){
+                if (Phaser.Math.Distance.Between(0, 0, p.x, p.z) < this.oasis.radius * this.desertParams.gridSize) {
+                    socket.emit("spawnTree", {
+                        pos: {
+                            x: p.x,
+                            y: p.y,
+                            z: p.z
+                        }
+                    });
+                }
+            }
         }
     }
 

@@ -44,15 +44,34 @@ export class Player3d{
         }
 
         this.mode = PLAYERMODE.LOOK;
+        this.asset = "sprTroglodyte00";
 
-        this.reticle = this.scene.add.sprite(0, 0, "sprUiCrosshairDot");
+        this.reticle = this.scene.add.sprite(0, 0, "sprNothing");
         this.reticle.depth = 9999;
         this.reticle.alpha = 0;
-        this.lowerHint = this.scene.add.bitmapText(0, (this.scene.game.config.height * 0.4), "whiteRabbit_16", "click to use/talk", 16, 1).setOrigin(0.5).setLetterSpacing(1);
+        this.lowerHint = this.scene.add.bitmapText(0, (this.scene.game.config.height * 0.4), "whiteRabbit_16", "interact", 16, 1).setOrigin(0.5).setLetterSpacing(1);
         this.lowerHint.depth = 9999;
         this.useBox = this.scene.add.graphics({x: 0, y: 0.5});
         this.useBox.depth = 9999;
         this.useBoxAnim = 0;
+
+        this.lowerHintPic = this.scene.add.sprite(0, 0, "sprNothing");
+        this.lowerHintPic.depth = 9999;
+        this.lowerHintPic.alpha = 0;
+        this.lowerHintPic.setScale(3,3);
+
+        this.heldItem = this.scene.add.sprite(0, this.scene.bottom - 48, "sprNothing");
+        this.heldItem.depth = 9999;
+        this.heldItem.alpha = 0;
+        this.heldItemData = {
+            text: "",
+            itemType: "none",
+            hintPic: "sprNothing"
+        };
+
+        this.hands = this.scene.add.sprite(0, this.scene.bottom, "sprHandsHolditem");
+        this.hands.depth = 9990;
+        this.hands.alpha = 0;
 
         this.panel = null;
         this.conversation = null;
@@ -98,8 +117,49 @@ export class Player3d{
         }
     }
 
+    setHeldItem(_texture, _data){
+        this.heldItem.setTexture(_texture);
+        this.heldItem.alpha = 1;
+        this.heldItemData = _data;
+
+        this.hands.setTexture("sprHandsHolditem");
+        this.hands.alpha = 1;
+        this.hands.setOrigin(0.5, 1);
+        this.hands.x = 0;
+        this.hands.y = this.scene.bottom;
+
+        if (_data.itemType === "none"){
+            this.hands.y = this.scene.height;
+        }
+    }
+
+    useHeldItem(){
+
+    }
+
+    placeHeldItem(){
+        switch (this.heldItemData.itemType) {
+            case "letter":
+                socket.emit("spawnScroll", {
+                    pos: {
+                        x: this.pos.x,
+                        y: this.pos.y,
+                        z: this.pos.z
+                    }
+                });
+                break;
+            default:
+                break;
+        }
+    }
+
     setHintText(_text){
         this.lowerHint.setText(_text);
+    }
+
+    setHintPic(_texture, _alpha) {
+        this.lowerHintPic.setTexture(_texture);
+        this.lowerHintPic.alpha = _alpha;
     }
 
     setUseBox(_rect){
@@ -107,18 +167,18 @@ export class Player3d{
         let th = 6;
 
         //draw faint scanlines
-        this.useBox.lineStyle(3, 0x00e436, 0.25);
-        this.useBox.beginPath();
+        this.useBox.lineStyle(3, 0xfff1e8, 0.25);
+        /*this.useBox.beginPath();
         for(let y = _rect.p0.y ; y < _rect.p1.y ; y++){
             if ((Math.floor(this.scene.game.config.height + y)) % th === Math.floor(this.useBoxAnim)){
                 this.useBox.moveTo(_rect.p0.x, y);
                 this.useBox.lineTo(_rect.p1.x, y);
             }
         }
-        this.useBox.strokePath();
+        this.useBox.strokePath();*/
 
         //draw box outline
-        this.useBox.lineStyle(1, 0x00e436, 1);
+        this.useBox.lineStyle(3, 0xfff1e8, 1);
         this.useBox.beginPath();
         this.useBox.moveTo(_rect.p0.x, _rect.p0.y);
         this.useBox.lineTo(_rect.p1.x, _rect.p0.y);
