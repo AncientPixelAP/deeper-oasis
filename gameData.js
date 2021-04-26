@@ -58,7 +58,7 @@ class GameData {
 
     spawnStoneStack(_id, _data){
         this.stoneStacks.push({
-            id: this.stoneStacks.length,
+            id: "stone" + String(this.stoneStacks.length),
             pos: {
                 x: _data.pos.x,
                 y: _data.pos.y,
@@ -87,7 +87,7 @@ class GameData {
     }
     spawnScroll(_id, _data) {
         this.scrolls.push({
-            id: this.scrolls.length,
+            id: "scroll" + String(this.scrolls.length),
             letter: Math.floor(Math.random()*10),
             pos: {
                 x: _data.pos.x,
@@ -119,7 +119,7 @@ class GameData {
     }
     spawnTree(_id, _data) {
         this.trees.push({
-            id: this.trees.length,
+            id: "tree" + String(this.trees.length),
             pos: {
                 x: _data.pos.x,
                 y: _data.pos.y,

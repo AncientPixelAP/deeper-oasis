@@ -27,6 +27,8 @@ export default class ScnLoad extends Phaser.Scene {
         this.load.image("sprDebugQuadPoint4", "sprites/sprDebugQuadPoint4.png");
 
         this.load.image("sprHandsHolditem", "sprites/sprHandsHolditem.png");
+        this.load.image("sprHelp", "sprites/sprHelpSmall.png");
+        this.load.image("sprFullscreen", "sprites/sprFullscreenSmall.png");
 
         this.load.image("sprDesert00", "sprites/sprDesert00.png");
         this.load.image("sprDesert01", "sprites/sprDesert01.png");
@@ -73,8 +75,20 @@ export default class ScnLoad extends Phaser.Scene {
         this.load.json("modScroll", "json/models/scrollPoint.json");
 
 
+        this.load.audio("sndPlayerStep", "audio/oasisDesertStep01.mp3");
 
-        this.loadTxt = this.add.bitmapText(0, (this.game.config.height * 0.5) - 32, "whiteRabbit_16", "LOADING: 0%", 8, 1).setOrigin(0.5);
+        this.load.audio("sndDrone", "audio/oasisDrone01.mp3");
+        this.load.audio("sndThump", "audio/oasisThump01.mp3");
+        this.load.audio("sndDudel", "audio/oasisDudel01.mp3");
+        this.load.audio("sndPing", "audio/oasisPing01.mp3");
+
+        this.load.audio("musBeat", "audio/oasisMusicBeat00.mp3");
+        this.load.audio("musFlute", "audio/oasisMusicFlute00.mp3");
+        this.load.audio("musPlateau", "audio/oasisMusicPlateau00.mp3");
+
+
+
+        this.loadTxt = this.add.bitmapText(0, (this.game.config.height * 0.5) - 32, "whiteRabbit_16", "LOADING: 0%", 16, 1).setOrigin(0.5);
         this.ancient = this.add.sprite(0, 0, "sprPixelMan").setScale(2);
         this.pixel = this.add.sprite(0, -48, "sprPixelTurn").setScale(2);
 
@@ -95,13 +109,13 @@ export default class ScnLoad extends Phaser.Scene {
 
     create(){
         this.load.off("progress", this.updateProgressDisplay, this);
-        this.cache.bitmapFont.get("whiteRabbit_16").data.lineHeight = 16;
-        this.cache.bitmapFont.get("pixelmix").data.lineHeight = 40;
+        //this.cache.bitmapFont.get("whiteRabbit_16").data.lineHeight = 20;
+        //this.cache.bitmapFont.get("pixelmix").data.lineHeight = 40;
     }
 
     update(){
         if (this.logoDidRepeat >= 2) {
-            this.scene.start("Scn3d");
+            this.scene.start("ScnMain");//Scn3d
         }
     }
 

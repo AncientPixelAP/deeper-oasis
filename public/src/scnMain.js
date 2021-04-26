@@ -1,4 +1,6 @@
-//import Class from "./subfolder/class.js";
+import Button from "./button.js";
+import Hand from "./hand.js";
+
 
 export default class ScnMain extends Phaser.Scene {
 
@@ -44,24 +46,58 @@ export default class ScnMain extends Phaser.Scene {
             plus: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_ADD),
             minus: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.NUMPAD_SUBSTRACT),
         }
+        
+        this.hand = new Hand(this);
 
         /*this.keys.q.on("down", (_key, _event) => {
             _event.stopPropagation();
             console.log(navigator.getGamepads()[Math.max(0, gamepadsConnected - 1)]);
         }, this);*/
 
-        this.noise = this.plugins.get("rexperlinplugin").add(0);
+        /*this.noise = this.plugins.get("rexperlinplugin").add(0);
         //random noise value
         let x,y,z = 0;
-        let rn = this.noise.simplex3(x, y ,z);
+        let rn = this.noise.simplex3(x, y ,z);*/
 
-        this.loadTxt = this.add.bitmapText(0, 0, "whiteRabbit_16", "Deeper\nand\nDEEPER", 16, 1).setOrigin(0.5);
+        this.loadTxt = this.add.bitmapText(0, this.bottom - 16, "whiteRabbit_16", "a ld48 game by\nSebastian Merkl\ntwitter: @AncientPixel_AP", 16, 1).setOrigin(0.5, 1);
 
-        this.tests = [];
+        /*this.tests = [];
         for(let i = 0 ; i < 100 ; i++){
             rn = this.noise.simplex3(i, 0, 0);
             this.tests.push(this.add.sprite(i*32, rn * 32, "sprDesert00"));
+        }*/
+
+        this.btnPlay = new Button(this, { x: -36, y: 0 }, "sprLetter0", "", false, () => {
+            this.startGame();
+        });
+        this.btnPlay.sprite.setScale(4);
+
+        this.btnSound = new Button(this, { x: 36, y: 0 }, "sprLetter9", "", true, () => {
+            //this.toggleSound();
+            OPTIONS.sfx = 0;
+            this.musFlute.volume = 0;
+            this.btnSound.sprite.setTexture("sprLetter6");
+        });
+        this.btnSound.toggleOffFunc = () => {
+            OPTIONS.sfx = 1;
+            this.musFlute.volume = 1;
+            this.btnSound.sprite.setTexture("sprLetter9");
+            this.sndTest.play();
         }
+        this.btnSound.sprite.setScale(4);
+
+        this.btnFullscreen = new Button(this, { x: this.right - 32, y: this.bottom - 32 }, "sprFullscreen", "", false, () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        });
+
+
+        this.sndTest = this.sound.add("sndThump", { volume: 1 });
+        this.musFlute = this.sound.add("musFlute", { volume: 1, loop: true });
+        this.musFlute.play();
     }
 
     update(_time, _delta){
@@ -69,5 +105,28 @@ export default class ScnMain extends Phaser.Scene {
         while (this.delta.current >= this.delta.treshold){
             this.delta.current -= this.delta.treshold;
         }*/
+        this.hand.update();
+        this.btnPlay.update();
+        this.btnSound.update();
+        this.btnFullscreen.update();
+        this.hand.lateUpdate();
+    }
+
+    startGame(){
+        this.musFlute.stop();
+        this.sndTest.stop();
+
+        this.scene.start("Scn3d");
+    }
+
+    toggleSound(){
+        if(OPTIONS.sfx === 0){
+            OPTIONS.sfx = 1;
+            this.btnSound.sprite.setTexture("sprLetter9");
+            this.sndTest.play();
+        }else{
+            OPTIONS.sfx = 0;
+            this.btnSound.sprite.setTexture("sprLetter6");
+        }
     }
 }

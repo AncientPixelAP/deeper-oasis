@@ -1,3 +1,5 @@
+import Button from "../button.js";
+
 export class Player3d{
     constructor(_scene) {
         this.scene = _scene;
@@ -10,6 +12,11 @@ export class Player3d{
                 x: 0,
                 y: 0,
                 z: 0,
+            },
+            last: {
+                x: 0,
+                y: 0,
+                z: 0
             }
         }
         this.dir = {
@@ -31,8 +38,8 @@ export class Player3d{
         this.stepHeight = 9;
         this.collisionRadius = 15;
         this.spd = {
-            normal: 1,
-            sprint: 4
+            normal: 2,
+            sprint: 3
         }
 
         this.gravity = {
@@ -60,7 +67,7 @@ export class Player3d{
         this.lowerHintPic.alpha = 0;
         this.lowerHintPic.setScale(3,3);
 
-        this.heldItem = this.scene.add.sprite(0, this.scene.bottom - 48, "sprNothing");
+        this.heldItem = this.scene.add.sprite(0, this.scene.bottom - 64, "sprNothing");
         this.heldItem.depth = 9999;
         this.heldItem.alpha = 0;
         this.heldItemData = {
@@ -69,20 +76,50 @@ export class Player3d{
             hintPic: "sprNothing"
         };
 
-        this.hands = this.scene.add.sprite(0, this.scene.bottom, "sprHandsHolditem");
+        this.hands = this.scene.add.sprite(-8, this.scene.bottom, "sprHandsHolditem");
         this.hands.depth = 9990;
         this.hands.alpha = 0;
 
         this.panel = null;
         this.conversation = null;
+        this.travelLength = 0;
+
+        this.btnFullscreen = new Button(this.scene, { x: this.scene.right - 32, y: this.scene.bottom - 32 }, "sprFullscreen", "", false, () => {
+            if (this.scene.scale.isFullscreen) {
+                this.scene.scale.stopFullscreen();
+            } else {
+                this.scene.scale.startFullscreen();
+            }
+        });
+
+        /*this.btnHelp = new Button(this.scene, { x: this.scene.left + 32, y: this.scene.top + 64 }, "sprHelp", "", false, () => {
+            
+        });*/
+
+        this.sndStep = this.scene.sound.add("sndPlayerStep", { volume: OPTIONS.sfx });
     }
 
     update(){
+        this.btnFullscreen.update();
+        //this.btnHelp.update();
+
         if(this.pos.to.jump === true){
             this.pos.x = this.pos.to.x;
             this.pos.y = this.pos.to.y;
             this.pos.z = this.pos.to.z;
             this.pos.to.jump = false;
+        }
+
+        if (eud.distance([this.pos.x, this.pos.y, this.pos.z], [this.pos.last.x, this.pos.last.y, this.pos.last.z]) > 48){
+            this.travelLength += 48;
+            this.pos.last.x = this.pos.x;
+            this.pos.last.y = this.pos.y;
+            this.pos.last.z = this.pos.z;
+            //if (this.gravity.grounded === true){
+            if(Math.abs(this.vel.y) < 1){
+                this.sndStep.volume = (0.5 + (Math.random() * 0.5)) * OPTIONS.sfx;
+                this.sndStep.play();
+            }
         }
 
         if(this.panel !== null){
@@ -125,7 +162,7 @@ export class Player3d{
         this.hands.setTexture("sprHandsHolditem");
         this.hands.alpha = 1;
         this.hands.setOrigin(0.5, 1);
-        this.hands.x = 0;
+        this.hands.x = -8;
         this.hands.y = this.scene.bottom;
 
         if (_data.itemType === "none"){

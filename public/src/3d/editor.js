@@ -214,7 +214,7 @@ export default class Editor {
         this.scene.keys.e.on("down", (_key, _event) => {
             _event.stopPropagation();
             if (this.scene.keys.q.isDown) {
-                this.toggleEditor();
+                //this.toggleEditor();
             }
         }, this);
     }

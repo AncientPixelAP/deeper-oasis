@@ -109,14 +109,14 @@ export default class Scn3d extends Phaser.Scene {
         });
 
         socket.on("spawnStoneStack", (_data) => {
-            this.level.addStoneStack(_data);
+            this.level.addStoneStack(_data, true);
         });
         socket.on("removeStoneStack", (_data) => {
             this.level.removeStoneStack(_data.id);
         });
 
         socket.on("spawnTree", (_data) => {
-            this.level.addTree(_data);
+            this.level.addTree(_data, true);
         });
         socket.on("removeTree", (_data) => {
             this.level.removeTree(_data.id);
@@ -124,7 +124,7 @@ export default class Scn3d extends Phaser.Scene {
 
         socket.on("spawnScroll", (_data) => {
             if(_data.taken === false){
-                this.level.addScroll(_data);
+                this.level.addScroll(_data, true);
             }
         });
         socket.on("removeScroll", (_data) => {
@@ -145,13 +145,13 @@ export default class Scn3d extends Phaser.Scene {
             this.playersData = _data.playersData;
             this.objectsData = _data.objectsData;
             for(let s of this.objectsData.stoneStacks){
-                this.level.addStoneStack(s);
+                this.level.addStoneStack(s, false);
             }
             for (let t of this.objectsData.trees) {
-                this.level.addTree(t);
+                this.level.addTree(t, false);
             }
             for (let s of this.objectsData.scrolls) {
-                this.level.addScroll(s);
+                this.level.addScroll(s, false);
             }
             this.synchronize();
         });
@@ -189,6 +189,10 @@ export default class Scn3d extends Phaser.Scene {
                 roll: this.player.dir.roll
             }
         });
+
+        /*this.numkeys.plus.on("up", (_key, _event) => {
+            this.level.storyteller.triggerNextStory();
+        }, this);*/
     }
 
     update(){
@@ -219,7 +223,7 @@ export default class Scn3d extends Phaser.Scene {
                     let model = this.geometryController.getModelById(this.modelName = hits[hits.length - 1].modelId);
                     if (model.interactable === true){
                         if (eud.distance([this.player.pos.x, this.player.pos.y, this.player.pos.z], [model.pos.x, model.pos.y, model.pos.z]) < 48){
-                            //this.player.setHintText(model.data.text !== undefined ? model.data.text : "");
+                            //this.player.setHintText(model.data.text !== undefined ? model.data.text : "bla");
                             if(model.data.hintPic !== undefined){
                                 this.player.setHintPic(model.data.hintPic, 1);
                             }else{
@@ -228,7 +232,6 @@ export default class Scn3d extends Phaser.Scene {
                             //this.player.setUseBox(model.getScreenBounds());
 
                             if (this.hand.justReleased || INPUTS.btnA.justReleased) {
-                                //let model = this.geometryController.getModelById(this.modelName = hits[hits.length - 1].modelId);
                                 model.interact();
                             }
                         }else{
@@ -355,6 +358,7 @@ export default class Scn3d extends Phaser.Scene {
             this.player.asset = "sprTroglodyte01";
         }
         if (Math.abs(this.player.vel.y) > 1) {
+        //if (this.player.gravity.grounded === false){
             this.player.asset = "sprTroglodyte02";
         }
 
@@ -447,6 +451,10 @@ export default class Scn3d extends Phaser.Scene {
                 if (Phaser.Math.Distance.Between(0, 0, this.player.pos.x, this.player.pos.z) < 64) {
                     if (this.player.heldItemData.letter === this.level.oasis.nextLetter) {
                         socket.emit("commitLetter", {});
+                        this.level.sndDudel.play();
+                        this.level.storyteller.triggerNextBit();
+                    }else{
+                        this.level.sndPing.play();
                     }
                 } else {
                     //place a orientational stone stack
@@ -460,6 +468,7 @@ export default class Scn3d extends Phaser.Scene {
                         });
                     }
                     this.player.setHeldItem("sprNothing", { itemType:"none", text: "", hintPic: "sprNothing"});
+                    //this.level.sndPing.play();
                 }
             } else if (this.player.heldItemData.itemType === "seed"){
                 //planting a seed on near player position
@@ -474,6 +483,7 @@ export default class Scn3d extends Phaser.Scene {
                     });
                 }
                 this.player.setHeldItem("sprNothing", { itemType: "none", text: "", hintPic: "sprNothing" });
+                //this.level.sndThump.play();
             }
         }
 
@@ -495,12 +505,14 @@ export default class Scn3d extends Phaser.Scene {
                 if(dist <= this.player.stepHeight){
                     this.player.vel.y = 0;
                     this.player.pos.y = nearestHit.pt[1];
+                    this.player.gravity.grounded = true;
                     //this.player.asset = "sprTroglodyte00";
                 }else{
                     if (this.player.vel.y < this.player.gravity.terminal) {
                         this.player.vel.y += this.player.gravity.y;
                     }
                     this.player.pos.y += this.player.vel.y;
+                    this.player.gravity.grounded = false;
                     //this.player.asset = "sprTroglodyte02";
                 }
             }else{

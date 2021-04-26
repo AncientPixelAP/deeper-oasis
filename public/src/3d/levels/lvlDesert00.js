@@ -1,3 +1,5 @@
+import { Storyteller } from "../../storyTeller.js";
+
 export default class LevelDesert00{
     constructor(_scene){
         this.scene = _scene;
@@ -13,6 +15,9 @@ export default class LevelDesert00{
         //random noise value
         //let x, y, z = 0;
         //let rn = this.noise.simplex3(x, y, z);
+
+        this.storyteller = new Storyteller(this.scene);
+        this.travelled = 0;
 
         this.oasis = {
             radius: 3,
@@ -41,6 +46,7 @@ export default class LevelDesert00{
             gridSize: 64,
             viewDist: 24
         }
+        this.desertMidTileNo = 0;
         this.desert = [];
         for(let yy = -32 ; yy < 32 ; yy++){
             for (let xx = -32; xx < 32; xx++){
@@ -57,6 +63,9 @@ export default class LevelDesert00{
                             z: this.desert[this.desert.length - 1].pos.z
                         })
                     }
+                    if(xx === 0 && yy === 0){
+                        this.desertMidTileNo = this.desert.length-1;
+                    }
                 }
             }
         }
@@ -71,11 +80,31 @@ export default class LevelDesert00{
         this.trees = [];
         this.scrolls = [];
 
+        //music stuuuff
+        this.musBeat = this.scene.sound.add("musBeat", { volume: 0, loop: true });
+        this.musBeat.play();
+        this.musFlute = this.scene.sound.add("musFlute", { volume: 0, loop: true });
+        this.musFlute.play();
+        this.musPlateau = this.scene.sound.add("musPlateau", { volume: 0, loop: true });
+        this.musPlateau.play();
+        this.musicVolume = {
+            beat: 0,
+            flute: 0,
+            plateau: 0
+        }
+
+        this.sndDrone = this.scene.sound.add("sndDrone", { volume: OPTIONS.sfx });
+        this.sndThump = this.scene.sound.add("sndThump", { volume: OPTIONS.sfx });
+        this.sndDudel = this.scene.sound.add("sndDudel", { volume: OPTIONS.sfx });
+        this.sndPing = this.scene.sound.add("sndPing", { volume: OPTIONS.sfx });
+
         this.calculateDesert();
         this.spawnFirstTrees();
     }
 
     update(){
+        this.storyteller.update();
+
         let recalc = false;
         //move with the player to reuse the same desert tiles
         if (this.desertPos.z - this.scene.player.pos.z >= this.desertParams.gridSize){
@@ -143,7 +172,7 @@ export default class LevelDesert00{
         return found;
     }
     
-    addTree(_data){
+    addTree(_data, _sfx){
         let nv = this.noise.simplex3(_data.pos.x, _data.pos.y, _data.pos.z);
         let variety = Math.floor(Math.abs(nv) * 4);
         this.trees.push(this.scene.geometryController.loadModel(_data.id, "modTree", {
@@ -179,6 +208,10 @@ export default class LevelDesert00{
         if(goodPosition === false){
             //no good for tree, to far away
             socket.emit("removeTree", {id: _data.id});
+        }else{
+            if(_sfx === true){
+                this.sndThump.play();
+            }
         }
         //console.log(this.trees.length);
     }
@@ -206,7 +239,7 @@ export default class LevelDesert00{
         }
     }
 
-    addStoneStack(_data){
+    addStoneStack(_data, _sfx){
         this.stoneStacks.push(this.scene.geometryController.loadModel(_data.id, "modStoneStack", {
                 x: _data.pos.x,
                 y: _data.pos.y,
@@ -214,6 +247,9 @@ export default class LevelDesert00{
             })
         );
         this.stoneStacks[this.stoneStacks.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
+        if(_sfx === true){
+            this.sndPing.play();
+        }
     }
     tryRemoveStoneStack(_pos){
         for(let s of this.stoneStacks){
@@ -239,28 +275,28 @@ export default class LevelDesert00{
         }
     }
 
-    addScroll(_data) {
+    addScroll(_data, _sfx) {
         if(_data.taken === false){
-            this.scrolls.push(this.scene.geometryController.loadModel(_data.id, "modScroll", {
+            let _t = this.scrolls.push(this.scene.geometryController.loadModel(_data.id, "modScroll", {
                     x: _data.pos.x,
                     y: _data.pos.y,
                     z: _data.pos.z
                 })
             );
-            this.scrolls[this.scrolls.length - 1].interactable = true;
-            this.scrolls[this.scrolls.length - 1].data = {
+            let _this = this.scrolls[_t-1];
+            _this.interactable = true;
+            _this.data = {
                 letter: _data.letter,
                 text: "pick up",
                 itemType: "letter",
                 hintPic: "sprLetter"+String(_data.letter)
             }
-            let _this = this.scrolls[this.scrolls.length - 1];
-            this.scrolls[this.scrolls.length - 1].interact = () => {
+            _this.interact = () => {
                 this.scene.player.setHeldItem("sprLetter"+String(_data.letter), _this.data)
                 this.scene.level.tryRemoveScroll(this.scene.player.pos);
             }
-            this.scrolls[this.scrolls.length - 1].setDrawMode(DRAWMODE.BILLBOARD);
-            //console.log(this.scrolls.length);
+            _this.setDrawMode(DRAWMODE.BILLBOARD);
+            //console.log(_this.data);
         }
     }
     tryRemoveScroll(_pos) {
@@ -321,7 +357,9 @@ export default class LevelDesert00{
 
     calculateDesert(){
         //console.log(this.oasis.tiles.length)
-        for (let d of this.desert) {
+        let ground = "desert";
+
+        for (let [j, d] of this.desert.entries()) {
             let tex = "sprDesert00";
             let xx, yy, zz, rn, hh = 0;
 
@@ -329,6 +367,9 @@ export default class LevelDesert00{
             for(let t of this.oasis.tiles){
                 if(Phaser.Math.Distance.Between(t.x, t.z, d.pos.x, d.pos.z) < 1){
                     tex = "sprOasis00";
+                    if (j === this.desertMidTileNo) {
+                        ground = "oasis";
+                    }
                 }
             }
             //water pond in the middle
@@ -357,17 +398,19 @@ export default class LevelDesert00{
 
                 //rare plateus
                 if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > 0.6) {
+                    if(j === this.desertMidTileNo){
+                        ground = "plateau";
+                    }
                     rn = -1;
                     hh = 0;
                     tex = "sprDesert01";
                     isPlateau = true;
                     if (Math.floor(this.noise.simplex3(zz * 1.1, xx, 0) * 10) >= 8){
                         //add scroll on floor
-                        //this.tryAddTree({x: xx, y:yy, z:zz}, rn, hh);
                         socket.emit("spawnScroll", {
                             pos: {
                                 x: xx,
-                                y: Math.floor((rn * this.desertParams.duneFactor) * 64),
+                                y: ((rn + (hh * hh)) * this.desertParams.duneFactor) * 64,
                                 z: zz
                             }
                         });
@@ -390,6 +433,65 @@ export default class LevelDesert00{
                 d.collisionData[0].points[i].y = p.y;
             }
             d.quadData[0].setTexture(tex);
+        }
+
+        //adapt music tracks volume to ground type
+        switch(ground){
+            case "desert":
+                if (this.musicVolume.beat < 1){
+                    this.musicVolume.beat += 0.1;
+                }
+                if (this.musicVolume.plateau > 0) {
+                    this.musicVolume.plateau -= 0.1;
+                }
+                //this.musBeat.volume = Math.max(0, Math.min(this.musBeat.volume, 1));
+                //this.musPlateau.volume = Math.max(0, Math.min(this.musPlateau.volume, 1));
+            break;
+            case "oasis":
+                if (this.musicVolume.beat > 0) {
+                    this.musicVolume.beat -= 0.1;
+                }
+                if (this.musicVolume.plateau > 0) {
+                    this.musicVolume.plateau -= 0.1;
+                    //console.log(this.musPlateau.volume);
+                }
+                //this.musBeat.volume = Math.max(0, Math.min(this.musBeat.volume, 1));
+                //this.musPlateau.volume = Math.max(0, Math.min(this.musPlateau.volume, 1));
+            break;
+            case  "plateau":
+                if (this.musicVolume.plateau < 1) {
+                    this.musicVolume.plateau += 0.1;
+                }
+                //this.musPlateau.volume = Math.max(0, Math.min(this.musPlateau.volume, 1));
+            break;
+            default:
+            break;
+        }
+        //adapt music to other players
+        let companion = false;
+        for(let t of this.troglodytes){
+            if (eud.distance([this.scene.player.pos.x, this.scene.player.pos.y, this.scene.player.pos.z], [t.pos.x, t.pos.y, t.pos.z]) < 512){
+                companion = true;
+            }
+        }
+        if(companion === true){
+            if (this.musicVolume.flute < 1) {
+                this.musicVolume.flute += 0.1;
+            }
+        }else{
+            if (this.musicVolume.flute > 0) {
+                this.musicVolume.flute -= 0.1;
+            }
+        }
+
+        this.musBeat.volume = this.musicVolume.beat * OPTIONS.sfx;
+        this.musFlute.volume = this.musicVolume.flute * OPTIONS.sfx;
+        this.musPlateau.volume = this.musicVolume.plateau * OPTIONS.sfx;
+
+        //story
+        if(this.scene.player.travelLength >= this.travelled + 3000){
+            this.travelled += 3000;
+            this.storyteller.triggerNextStory();
         }
     }
 
@@ -447,6 +549,15 @@ export default class LevelDesert00{
     destroy() {
         for(let t of this.troglodytes){
             t.destroy();
+        }
+        for (let t of this.trees) {
+            t.destroy();
+        }
+        for (let s of this.scrolls) {
+            s.destroy();
+        }
+        for (let s of this.stoneStacks) {
+            s.destroy();
         }
 
         for(let d of this.desert){
