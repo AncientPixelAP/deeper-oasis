@@ -249,9 +249,9 @@ export default class Scn3d extends Phaser.Scene {
                         this.hand.setMouseLock(true);
                     }
                     //log the playre  position as a helper for manual object positioning in level files
-                    if(this.keys.q.isDown){
+                    /*if(this.keys.q.isDown){
                         console.log(this.player.pos);
-                    }
+                    }*/
                 }
             }
 

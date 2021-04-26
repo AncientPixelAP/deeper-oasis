@@ -80,6 +80,18 @@ export class Player3d{
         this.hands.depth = 9990;
         this.hands.alpha = 0;
 
+        this.helpTxt = this.scene.add.bitmapText(0, this.scene.top + 16, "whiteRabbit_16", "CONTROLS", 16, 1).setOrigin(0.5, 0);
+        this.helpTxt.depth = 10002;
+        this.helpTxt.alpha = 0;
+        this.helpSheet = this.scene.add.sprite(0, 0, "sprHelpSheet");
+        this.helpSheet.depth = 10001;
+        this.helpSheet.alpha = 0;
+        this.helpBox = this.scene.add.graphics({ x: 0, y: 0 });
+        this.helpBox.fillStyle(0x000000, 0.75);
+        this.helpBox.fillRect(this.scene.left, this.scene.top, this.scene.game.config.width, this.scene.game.config.height)
+        this.helpBox.depth = 10000;
+        this.helpBox.alpha = 0;
+
         this.panel = null;
         this.conversation = null;
         this.travelLength = 0;
@@ -92,16 +104,16 @@ export class Player3d{
             }
         });
 
-        /*this.btnHelp = new Button(this.scene, { x: this.scene.left + 32, y: this.scene.top + 64 }, "sprHelp", "", false, () => {
-            
-        });*/
+        this.btnHelp = new Button(this.scene, { x: this.scene.right - 32, y: this.scene.bottom - 64 }, "sprHelp", "", false, () => {
+            this.toggleHelp();
+        });
 
         this.sndStep = this.scene.sound.add("sndPlayerStep", { volume: OPTIONS.sfx });
     }
 
     update(){
         this.btnFullscreen.update();
-        //this.btnHelp.update();
+        this.btnHelp.update();
 
         if(this.pos.to.jump === true){
             this.pos.x = this.pos.to.x;
@@ -236,5 +248,19 @@ export class Player3d{
 
     clearUseBox(){
         this.useBox.clear();
+    }
+
+    toggleHelp(){
+        if(this.helpBox.alpha === 0){
+            this.helpBox.alpha = 1;
+            this.helpTxt.alpha = 1;
+            this.helpSheet.alpha = 1;
+            this.setMode(PLAYERMODE.INTERACT);
+        }else{
+            this.helpBox.alpha = 0;
+            this.helpTxt.alpha = 0;
+            this.helpSheet.alpha = 0;
+            this.setMode(PLAYERMODE.LOOK);
+        }
     }
 }
