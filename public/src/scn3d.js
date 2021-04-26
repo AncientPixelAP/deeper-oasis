@@ -445,9 +445,9 @@ export default class Scn3d extends Phaser.Scene {
             if (this.player.heldItemData.itemType === "letter") {
                 //commit letter to server if right
                 if (Phaser.Math.Distance.Between(0, 0, this.player.pos.x, this.player.pos.z) < 64) {
-                    //if (this.player.heldItemData.letter === this.level.oasis.nextLetter) {
+                    if (this.player.heldItemData.letter === this.level.oasis.nextLetter) {
                         socket.emit("commitLetter", {});
-                    //}
+                    }
                 } else {
                     //place a orientational stone stack
                     if (returnColl[3].hit.length > 0) {
