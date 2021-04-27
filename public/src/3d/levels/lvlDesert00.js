@@ -1,4 +1,4 @@
-import { Storyteller } from "../../storyTeller.js";
+import { Storyteller } from "../../storyteller.js";
 
 export default class LevelDesert00{
     constructor(_scene){
