@@ -86,6 +86,9 @@ export default class ScnMain extends Phaser.Scene {
         }
         this.btnSound.sprite.setScale(4);
 
+
+        //TODO add slider for mouse speed
+
         this.btnFullscreen = new Button(this, { x: this.right - 32, y: this.bottom - 32 }, "sprFullscreen", "", false, () => {
             if (this.scale.isFullscreen) {
                 this.scale.stopFullscreen();
