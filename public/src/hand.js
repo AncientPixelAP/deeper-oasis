@@ -8,7 +8,7 @@ export default class Hand{
 
         this.mouselock = false;
 
-        this.speedLimit = window.innerHeight / 200; 
+        this.sensitivity = window.innerHeight / 512; 
 
         this.pos = {
             x: 0,
@@ -22,7 +22,8 @@ export default class Hand{
 
         this.vel = {
             x: 0,
-            y: 0
+            y: 0,
+            limit: Math.round(10/this.sensitivity)
         }
         this.prev = {
             x: 0,
@@ -38,8 +39,8 @@ export default class Hand{
 
         if (this.scene.input.mouse.locked === true) {
             if (this.scene.input.activePointer.moveTime+60 >= this.scene.data.systems.time.now) {
-                this.vel.x = Math.max(-this.speedLimit, Math.min(this.speedLimit, this.scene.input.activePointer.movementX));
-                this.vel.y = Math.max(-this.speedLimit, Math.min(this.speedLimit, this.scene.input.activePointer.movementY));
+                this.vel.x = Math.max(-this.vel.limit, Math.min(this.vel.limit, this.scene.input.activePointer.movementX));
+                this.vel.y = Math.max(-this.vel.limit, Math.min(this.vel.limit, this.scene.input.activePointer.movementY));
             }else{
                 if (gamepadsConnected > 0) {
                     this.vel.x = Math.abs(INPUTS.stickRight.horizontal) > 0.1 ? INPUTS.stickRight.horizontal : 0;

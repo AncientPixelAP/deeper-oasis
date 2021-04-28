@@ -190,9 +190,9 @@ export default class Scn3d extends Phaser.Scene {
             }
         });
 
-        /*this.numkeys.plus.on("up", (_key, _event) => {
-            this.level.storyteller.triggerNextStory();
-        }, this);*/
+        this.numkeys.plus.on("up", (_key, _event) => {
+            console.log(this);
+        }, this);
     }
 
     update(){

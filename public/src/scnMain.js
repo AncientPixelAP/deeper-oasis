@@ -59,6 +59,8 @@ export default class ScnMain extends Phaser.Scene {
         let x,y,z = 0;
         let rn = this.noise.simplex3(x, y ,z);*/
 
+        this.btnTxt = this.add.bitmapText(0, -64, "whiteRabbit_16", "", 16, 1).setOrigin(0.5, 0);
+
         this.loadTxt = this.add.bitmapText(0, this.bottom - 16, "whiteRabbit_16", "a ld48 game by\nSebastian Merkl\ntwitter: @AncientPixel_AP", 16, 1).setOrigin(0.5, 1);
 
         /*this.tests = [];
@@ -87,7 +89,6 @@ export default class ScnMain extends Phaser.Scene {
         this.btnSound.sprite.setScale(4);
 
 
-        //TODO add slider for mouse speed
 
         this.btnFullscreen = new Button(this, { x: this.right - 32, y: this.bottom - 32 }, "sprFullscreen", "", false, () => {
             if (this.scale.isFullscreen) {
@@ -112,6 +113,15 @@ export default class ScnMain extends Phaser.Scene {
         this.btnPlay.update();
         this.btnSound.update();
         this.btnFullscreen.update();
+
+        if (this.btnPlay.state === this.btnPlay.states.over){
+            this.btnTxt.setText("Start");
+        } else if (this.btnSound.state === this.btnSound.states.over || this.btnSound.state === this.btnSound.states.on) {
+            this.btnTxt.setText("Sound " + (OPTIONS.sfx === 1 ? "enabled" : "disabled"));
+        }else{
+            this.btnTxt.setText("");
+        }
+
         this.hand.lateUpdate();
     }
 

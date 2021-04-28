@@ -208,10 +208,12 @@ export default class LevelDesert00{
         if(goodPosition === false){
             //no good for tree, to far away
             socket.emit("removeTree", {id: _data.id});
+            console.log("not a good space for tree.. remooving");
         }else{
             if(_sfx === true){
                 this.sndThump.play();
             }
+            console.log("tree planted");
         }
         //console.log(this.trees.length);
     }
