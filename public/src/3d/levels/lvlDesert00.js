@@ -397,7 +397,7 @@ export default class LevelDesert00{
                 rn = this.noise.simplex3(xx * this.desertParams.resolution.x, yy * this.desertParams.resolution.y, zz * this.desertParams.resolution.z);
                 hh = this.noise.simplex3(xx * 0.001, yy * 0.001, zz * 0.001);
 
-                if (homeDist >= 2560 && homeDist < 23072) {
+                if (homeDist >= 22560 && homeDist < 23072) {
                     rn += Math.abs(rn);
                 }else if (homeDist >= 23072 && homeDist < 23200){
                     if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > -0.6) {
