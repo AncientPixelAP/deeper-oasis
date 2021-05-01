@@ -13,6 +13,7 @@ class GameData {
         this.stoneStacks = [];
         this.trees = [];
         this.scrolls = [];
+        this.uniques = [];
 
         this.states = {
             grow: 0,
@@ -70,6 +71,36 @@ class GameData {
         lbl: for (let i = this.stoneStacks.length - 1; i >= 0; i--) {
             if (this.stoneStacks[i].id === _data.id) {
                 this.stoneStacks.splice(i, 1);
+                break lbl;
+            }
+        }
+    }
+
+    checkForUniques(_data) {
+        let found = false;
+        lbl: for (let u of this.uniques) {
+            if (Math.floor(s.pos.x) === Math.floor(_data.pos.x) && Math.floor(s.pos.z) === Math.floor(_data.pos.z)) {
+                found = true;
+                break lbl;
+            }
+        }
+        return found;
+    }
+    spawnUnique(_id, _data) {
+        this.uniques.push({
+            id: "unique" + String(this.uniques.length),
+            pos: {
+                x: _data.pos.x,
+                y: _data.pos.y,
+                z: _data.pos.z
+            },
+            taken: false
+        });
+    }
+    removeUnique(_data) {
+        lbl: for (let i = this.uniques.length - 1; i >= 0; i--) {
+            if (this.uniques[i].id === _data.id) {
+                this.scrolls.splice(i, 1);
                 break lbl;
             }
         }

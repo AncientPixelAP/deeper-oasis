@@ -21,6 +21,7 @@ export default class LevelDesert00{
 
         this.oasis = {
             radius: 3,
+            tutStones: [],
             tiles: [],
             nextLetter: 0,
             nextLetterModel: this.scene.geometryController.loadModel("nextLetter", "modNextLetter", {
@@ -65,6 +66,10 @@ export default class LevelDesert00{
                     }
                     if(xx === 0 && yy === 0){
                         this.desertMidTileNo = this.desert.length-1;
+                        console.log(String(this.desert.length - 1) + " mid");
+                    }
+                    if(xx === 0 && yy === 1){
+                        console.log(this.desert.length - 1);
                     }
                 }
             }
@@ -99,6 +104,7 @@ export default class LevelDesert00{
         this.sndPing = this.scene.sound.add("sndPing", { volume: OPTIONS.sfx });
 
         this.calculateDesert();
+        this.spawnTutStones();
         this.spawnFirstTrees();
     }
 
@@ -384,46 +390,57 @@ export default class LevelDesert00{
                 yy = 0 + d.pos.y
                 zz = p.z + d.pos.z
 
+                let homeDist = Phaser.Math.Distance.Between(0, 0, xx, zz);
                 let isPlateau = false;
                 
                 //inital landscape
                 rn = this.noise.simplex3(xx * this.desertParams.resolution.x, yy * this.desertParams.resolution.y, zz * this.desertParams.resolution.z);
                 hh = this.noise.simplex3(xx * 0.001, yy * 0.001, zz * 0.001);
 
-                //rare spikes
-                if (this.noise.simplex3(xx * 0.1, yy * 0.1, zz * 0.1) > 0.95){
-                    rn = -5;
-                    hh = 0;
-                    tex = "sprDesert01";
-                    isPlateau = true; //TODO maaybe remove if it hurts the temple generation
-                }
-
-                //rare plateus
-                if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > 0.6) {
-                    if(j === this.desertMidTileNo){
-                        ground = "plateau";
+                if (homeDist >= 2560 && homeDist < 23072) {
+                    rn += Math.abs(rn);
+                }else if (homeDist >= 23072 && homeDist < 23200){
+                    if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > -0.6) {
+                        rn = -2;
+                        hh = 0;
+                        tex = "sprMarble00";
                     }
-                    rn = -1;
-                    hh = 0;
-                    tex = "sprDesert01";
-                    isPlateau = true;
-                    if (Math.floor(this.noise.simplex3(zz * 1.1, xx, 0) * 10) >= 8){
-                        //add scroll on floor
-                        socket.emit("spawnScroll", {
-                            pos: {
-                                x: xx,
-                                y: ((rn + (hh * hh)) * this.desertParams.duneFactor) * 64,
-                                z: zz
-                            }
-                        });
+                }else{
+                    //rare spikes
+                    if (this.noise.simplex3(xx * 0.1, yy * 0.1, zz * 0.1) > 0.95) {
+                        rn = -5;
+                        hh = 0;
+                        tex = "sprDesert01";
+                        isPlateau = true; //TODO maaybe remove if it hurts the temple generation
+                    }
+
+                    //rare plateus
+                    if (this.noise.simplex3(xx * 0.0005, yy * 0.0005, zz * 0.0005) > 0.6) {
+                        if (j === this.desertMidTileNo) {
+                            ground = "plateau";
+                        }
+                        rn = -1;
+                        hh = 0;
+                        tex = "sprDesert01";
+                        isPlateau = true;
+                        if (Math.floor(this.noise.simplex3(zz * 1.1, xx, 0) * 10) >= 8) {
+                            //add scroll on floor
+                            socket.emit("spawnScroll", {
+                                pos: {
+                                    x: xx,
+                                    y: ((rn + (hh * hh)) * this.desertParams.duneFactor) * 64,
+                                    z: zz
+                                }
+                            });
+                        }
                     }
                 }
 
                 
                 //flatten terrain a bit in start area
-                let pd = Phaser.Math.Distance.Between(0, 0, xx, zz);
-                if (pd <= (16) * this.desertParams.gridSize) {
-                    let fac = ((16 * this.desertParams.gridSize) / pd);
+                
+                if (homeDist <= (16) * this.desertParams.gridSize) {
+                    let fac = ((16 * this.desertParams.gridSize) / homeDist);
                     if (isPlateau === false) {
                         rn /= fac;
                         hh /= fac;
@@ -498,18 +515,53 @@ export default class LevelDesert00{
     }
 
     spawnFirstTrees(){
-        for (let d of this.desert) {
-            for(let p of d.quadData[0].points){
-                if (Phaser.Math.Distance.Between(0, 0, p.x, p.z) < this.oasis.radius * this.desertParams.gridSize) {
-                    socket.emit("spawnTree", {
-                        pos: {
-                            x: p.x,
-                            y: p.y,
-                            z: p.z
-                        }
-                    });
-                }
+        let d = this.desert[this.desertMidTileNo - 1];
+        let p = d.quadData[0].points[0];
+        socket.emit("spawnTree", {
+            pos: {
+                x: d.pos.x + p.x,
+                y: d.pos.y + p.y,
+                z: d.pos.z + p.z
             }
+        });
+        d = this.desert[this.desertMidTileNo + 1];
+        p = d.quadData[0].points[2];
+        socket.emit("spawnTree", {
+            pos: {
+                x: d.pos.x + p.x,
+                y: d.pos.y + p.y,
+                z: d.pos.z + p.z
+            }
+        });
+        d = this.desert[this.desertMidTileNo + 47];
+        p = d.quadData[0].points[2];
+        socket.emit("spawnTree", {
+            pos: {
+                x: d.pos.x + p.x,
+                y: d.pos.y + p.y,
+                z: d.pos.z + p.z
+            }
+        });
+        d = this.desert[this.desertMidTileNo - 47];
+        p = d.quadData[0].points[0];
+        socket.emit("spawnTree", {
+            pos: {
+                x: d.pos.x + p.x,
+                y: d.pos.y + p.y,
+                z: d.pos.z + p.z
+            }
+        });
+    }
+
+    spawnTutStones(){
+        for (let [i,p] of this.desert[this.desertMidTileNo].quadData[0].points.entries()){
+            this.oasis.tutStones.push(this.scene.geometryController.loadModel("tutStone" + String(i), "modStoneStack", {
+                x: p.x,
+                y: p.y,
+                z: p.z
+            }));
+            this.oasis.tutStones[i].quadData[0].setTexture("sprTutStone0"+String(i));
+            this.oasis.tutStones[i].setDrawMode(DRAWMODE.BILLBOARD);
         }
     }
 
@@ -560,6 +612,10 @@ export default class LevelDesert00{
         }
         for (let s of this.stoneStacks) {
             s.destroy();
+        }
+
+        for(let t of this.oasis.tutStones){
+            t.destroy();
         }
 
         for(let d of this.desert){

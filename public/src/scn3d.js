@@ -80,10 +80,10 @@ export default class Scn3d extends Phaser.Scene {
         this.hand.setMouseLock(true);
 
         this.player = new Player3d(this);
-        let a = Math.random() * (Math.PI * 2);
-        this.player.pos.x = Math.sin(a) * 32;
+        let a = (Math.PI  * 0.5) + (Math.random() * Math.PI);
+        this.player.pos.x = Math.sin(a) * 64;
         this.player.pos.y = -32;
-        this.player.pos.z = Math.cos(a) * 32;
+        this.player.pos.z = Math.cos(a) * 64;
 
         this.editor = new Editor(this);
 

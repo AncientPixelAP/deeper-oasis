@@ -24,7 +24,7 @@ export class Storyteller{
             "Sometimes...\nI feel like I am being watched.",
             "Sometimes I watch symbols,\nfloating in the air.",
             "I can pick them up.",
-            "I can use them to\nplace a thing.",
+            "I can use them to\nplace a stone.",
             "The thing guides the soul\non its path through the duat.",
             "The oasis speaks to me.",
             "It calls me back.",
