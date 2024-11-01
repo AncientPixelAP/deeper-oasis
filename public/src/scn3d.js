@@ -331,6 +331,10 @@ export default class Scn3d extends Phaser.Scene {
                 this.hand.setMouseLock(true);
             }
             this.mouseLook();
+
+            if (globalOrientation.alpha !== null) {
+                this.orientationLook();
+            }
         }
 
         this.player.dir.pitch = Math.max(-HALFPI, Math.min(HALFPI ,this.player.dir.pitch));
@@ -610,6 +614,27 @@ export default class Scn3d extends Phaser.Scene {
             //this.player.dir.pitch = prevCamDir.pitch;
             this.player.dir.pitch += ((this.hand.vel.y * 0.4) * this.player.dir.spd.pitch);
         }
+    }
+
+    orientationLook() {
+        let arr = [globalOrientation.alpha, globalOrientation.beta, globalOrientation.gamma];
+        for (let [i, a] of arr.entries()) {
+            if (a === null) {
+                arr[i] = 0;
+            }
+            //if(a >= 180){a -= 360}
+            //if(a < -180){a += 360}
+            arr[i] = a * Math.PI / 180;
+        }
+
+        //this.player.dir.pitch = (arr[1] * -1) + (Math.PI * 0.5);
+        //this.player.dir.yaw = (arr[0]);
+
+        let rotation = getEulerAngles(getRotationMatrix(globalOrientation.alpha, globalOrientation.beta, globalOrientation.gamma));
+        let degtorad = Math.PI / 180;
+
+        this.player.dir.pitch = (rotation[1] * degtorad) * -1;
+        this.player.dir.yaw = (rotation[2] * degtorad)
     }
 
     loadLevel(_name){
