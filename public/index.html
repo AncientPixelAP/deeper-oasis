@@ -30,7 +30,63 @@
         }
 
         var socket = io(window.location.href);
-        console.log("test via git");
+
+        //orientation
+        function orientationHandler(_ev) {
+            globalOrientation.alpha = _ev.alpha;
+            globalOrientation.beta = _ev.beta;
+            globalOrientation.gamma = _ev.gamma;
+        }
+        window.addEventListener("deviceorientation", orientationHandler);
+
+        function getRotationMatrix(_alpha, _beta, _gamma) {
+            let degtorad = Math.PI / 180; // Degree-to-Radian conversion
+            let cX = Math.cos(_beta * degtorad);
+            let cY = Math.cos(_gamma * degtorad);
+            let cZ = Math.cos(_alpha * degtorad);
+            let sX = Math.sin(_beta * degtorad);
+            let sY = Math.sin(_gamma * degtorad);
+            let sZ = Math.sin(_alpha * degtorad);
+
+            let m11 = cZ * cY - sZ * sX * sY;
+            let m12 = - cX * sZ;
+            let m13 = cY * sZ * sX + cZ * sY;
+
+            let m21 = cY * sZ + cZ * sX * sY;
+            let m22 = cZ * cX;
+            let m23 = sZ * sY - cZ * cY * sX;
+
+            let m31 = - cX * sY;
+            let m32 = sX;
+            let m33 = cX * cY;
+
+            return [
+                m13, m11, m12,
+                m23, m21, m22,
+                m33, m31, m32
+            ];
+        };
+
+        function getEulerAngles(_matrix) {
+            let radtodeg = 180 / Math.PI; // Radian-to-Degree conversion
+            let sy = Math.sqrt(_matrix[0] * _matrix[0] + _matrix[3] * _matrix[3]);
+
+            let singular = sy < 1e-6; // If
+
+            let x = 0;
+            let y = 0;
+            let z = 0;
+            if (!singular) {
+                x = Math.atan2(_matrix[7], _matrix[8]);
+                y = Math.atan2(-_matrix[6], sy);
+                z = Math.atan2(_matrix[3], _matrix[0]);
+            } else {
+                x = Math.atan2(-_matrix[5], _matrix[4]);
+                y = Math.atan2(-_matrix[6], sy);
+                z = 0;
+            }
+            return [radtodeg * x, radtodeg * y, radtodeg * z];
+        }
 
         //gamepads
         let gamepads = {};
