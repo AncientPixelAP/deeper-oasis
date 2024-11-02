@@ -30,7 +30,7 @@
         }
         
         let globalOrientation = {
-            alpha: 0,
+            alpha: null,
             beta: 0,
             gamma: 0
         }
@@ -42,9 +42,8 @@
             globalOrientation.alpha = _ev.alpha;
             globalOrientation.beta = _ev.beta;
             globalOrientation.gamma = _ev.gamma;
-            alert(_ev.alpha)
         }
-        window.addEventListener("deviceorientation", orientationHandler);
+        //window.addEventListener("deviceorientation", orientationHandler);
 
         function getRotationMatrix(_alpha, _beta, _gamma) {
             let degtorad = Math.PI / 180; // Degree-to-Radian conversion
