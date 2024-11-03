@@ -138,7 +138,123 @@ export default class DataQuad{
         }
     }
 
+    //newer version of calc 3d
     calculate3d(_from, _dir, _mipmap = true) {
+        let recZ = -9999;
+        let sumZ = 0;
+
+        let outsideScreenSafe = false;
+        let cull = false;
+        let ptsOoB = 0;
+
+        //calculate the quads point in 3d seen from the camera
+        for (let [i, p] of this.points.entries()) {
+            let pts = {
+                x: p.x + this.pos.x - _from.x,
+                y: p.y + this.pos.y - _from.y,
+                z: p.z + this.pos.z - _from.z
+            }
+
+            let nx = pts.x;
+            let ny = pts.y;
+            let nz = pts.z;
+            let outXZ = rti.rotateY([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.yaw);
+            nx = outXZ[0];
+            ny = outXZ[1];
+            nz = outXZ[2];
+            let outYZ = rti.rotateX([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.pitch);
+            nx = outYZ[0];
+            ny = outYZ[1];
+            nz = outYZ[2];
+            let outXY = rti.rotateZ([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.roll);
+            nx = outXY[0];
+            ny = outXY[1];
+            nz = outXY[2];
+
+            if (nz <= 10) {
+                //cull = true;
+                ptsOoB += 1;
+            }
+            if (nz < 0) {
+                nz *= 0.001;//original 0.001
+            }
+            nz *= this.scene.cam.fov;//original
+
+            let nzMod = nz + this.scene.cam.zOffset;
+            let zoom = this.scene.cam.zoom;
+            //this.screenCoords[i].x = (nx / (Math.abs(Math.max(0.1, nzMod)) * 1)) * zoom;//ruckelig bc of abs
+            //this.screenCoords[i].y = (ny / (Math.abs(Math.max(0.1, nzMod)) * 1)) * zoom;//ruckelig bc of abs
+            this.screenCoords[i].x = (nx / Math.max(0.1, nzMod) * 1) * zoom;
+            this.screenCoords[i].y = (ny / Math.max(0.1, nzMod) * 1) * zoom;
+
+            if (outsideScreenSafe === false) {
+                outsideScreenSafe = this.screenCoords[i].x <= this.scene.left || this.screenCoords[i].x >= this.scene.right || this.screenCoords[i].y <= this.scene.top || this.screenCoords[i].y >= this.scene.bottom;
+            }
+
+            this.zDepth = (1 / Math.abs(nzMod)) * zoom;
+
+            //ortho rendering
+            //this.screenCoords[i].x = nx;
+            //this.screenCoords[i].y = ny;
+
+            //clamp screenCoords
+            //this.screenCoords[i].x = Math.max(-this.scene.game.config.width * 20, Math.min(this.scene.game.config.width * 20, this.screenCoords[i].x));
+            //this.screenCoords[i].y = Math.max(-this.scene.game.config.height * 20, Math.min(this.scene.game.config.height * 20, this.screenCoords[i].y));
+
+            if (nz > recZ) {
+                recZ = nzMod;
+            }
+            //sumZ += nz;
+            //sumZ += (nz + (512 - Phaser.Math.Distance.Between(this.screenCoords[i].x, this.screenCoords[i].y, 0, 0) * -0.1)) * 1;
+            sumZ += nz;// + (Math.abs(this.screenCoords[i].y + this.screenCoords[i].x) * 0.1);
+        }
+        this.depth = sumZ * -0.25;
+        //this.depth = recZ*-1;
+        this.shade = Math.max(0, 255 - ((recZ + 0) * 0.05));
+
+        //if (ptsOoB === 4){
+        if (ptsOoB > 3) {
+            cull = true;
+        }
+
+        if (this.type !== "collisionQuad") {
+            if (cull === true) {//if(this.depth >= 0 || cull === true){//near clipping plane could be at -25 for example
+                if (this.quads.length > 0) {
+                    this.clearQuads();
+                }
+            } else {// if(this.depth < 0){
+                if (this.quads.length === 0) {
+                    this.createQuad();
+                }
+                //quad so near that mipmapping is required?
+                //if (this.depth > -50){
+                if (outsideScreenSafe === true) {
+                    if (_mipmap === true && this.quads.length > 0) {
+                        this.mipmapQuad();
+                    }
+                } else {
+                    if (this.quads.length > 0) {
+                        this.unmipmapQuad();
+                    }
+                }
+            }
+
+            if (this.quads.length > 0) {
+                //if (this.depth < -12) {// (recZ > 16) at sumZ * -0.25
+                if (cull === false) {
+                    for (let q of this.quads) {
+                        q.alphas = [1, 1, 1, 1, 1, 1];
+                    }
+                } else {
+                    for (let q of this.quads) {
+                        q.alphas = [0, 0, 0, 0, 0, 0];
+                    }
+                }
+            }
+        }
+    }
+
+    calculate3dOld(_from, _dir, _mipmap = true) {
         let recZ = -9999;
         let sumZ = 0;
 

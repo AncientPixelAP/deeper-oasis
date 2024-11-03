@@ -83,7 +83,7 @@ export class Player3d{
         this.helpTxt = this.scene.add.bitmapText(0, this.scene.top + 16, "whiteRabbit_16", "CONTROLS", 16, 1).setOrigin(0.5, 0);
         this.helpTxt.depth = 10002;
         this.helpTxt.alpha = 0;
-        this.helpSheet = this.scene.add.sprite(0, 0, "sprHelpSheet");
+        this.helpSheet = this.scene.add.sprite(0, 0, (isMobile === true ? "sprHelpSheetMobile" : "sprHelpSheet"));
         this.helpSheet.depth = 10001;
         this.helpSheet.alpha = 0;
         this.helpBox = this.scene.add.graphics({ x: 0, y: 0 });
