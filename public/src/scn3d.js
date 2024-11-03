@@ -335,6 +335,9 @@ export default class Scn3d extends Phaser.Scene {
             if (globalOrientation.alpha !== null) {
                 this.orientationLook();
             }
+            if(isMobile === true){
+                this.touchLook();
+            }
         }
 
         this.player.dir.pitch = Math.max(-HALFPI, Math.min(HALFPI ,this.player.dir.pitch));
@@ -354,6 +357,30 @@ export default class Scn3d extends Phaser.Scene {
             toPos.z -= (Math.cos(this.player.dir.yaw) * INPUTS.stickLeft.vertical) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
             toPos.x += (Math.sin(this.player.dir.yaw) * INPUTS.stickLeft.vertical) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
             isMoving = true;
+        }
+        //touch controls move
+        if(isMobile === true){
+            if (this.hand.pressed === true) {
+                if(this.hand.start.y > this.game.config.height * -0.4 && this.hand.start.y < this.game.config.height * 0.4){
+                    if (this.hand.start.x > this.game.config.width * -0.33 && this.hand.start.x < this.game.config.width * 0.33) {
+                        let amt = Math.max(-1, Math.min(1, (this.hand.pos.y - this.hand.start.y) * 0.01));
+                        if(this.hand.pos.y > 0){
+                            INPUTS.btnTriggerLeft.pressed = true;
+                        }else{
+                            INPUTS.btnTriggerLeft.pressed = false;
+                        }
+                        toPos.z -= (Math.cos(this.player.dir.yaw) * amt) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
+                        toPos.x += (Math.sin(this.player.dir.yaw) * amt) * (INPUTS.btnTriggerLeft.pressed ? this.player.spd.sprint : this.player.spd.normal);
+                        isMoving = true;
+                        if (this.hand.pos.y < this.game.config.height * -0.1) {//also jump
+                            if (this.player.vel.y === 0) {
+                                this.player.vel.y = -2;
+                                this.player.pos.y += this.player.vel.y;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if(isMoving === true){
@@ -427,8 +454,18 @@ export default class Scn3d extends Phaser.Scene {
             }
         ]
 
+        //try to interact on mobile
+        let touchInteract = false;
+        if (isMobile === true) {
+            if (this.hand.justReleased === true) {
+                if (this.hand.start.y < this.game.config.height * -0.4 || this.hand.start.y > this.game.config.height * 0.4) {
+                    touchInteract = true;
+                }
+            }
+        }
+
         //try to find stoeckchen position
-        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false) {
+        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false || touchInteract === true) {
             //if (this.player.heldItemData.itemType === "letter" || this.player.heldItemData.itemType === "seed"){
                 checkColl.push({
                     pos: {
@@ -449,7 +486,7 @@ export default class Scn3d extends Phaser.Scene {
         returnColl = this.geometryController.update(checkColl);
         
         //really place stoeckchen now
-        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false) {
+        if (INPUTS.btnA.justReleased || this.input.mouse.locked === true ? this.hand.justReleased : false || touchInteract === true) {
             if (this.player.heldItemData.itemType === "letter") {
                 //commit letter to server if right
                 if (Phaser.Math.Distance.Between(0, 0, this.player.pos.x, this.player.pos.z) < 64) {
@@ -622,19 +659,29 @@ export default class Scn3d extends Phaser.Scene {
             if (a === null) {
                 arr[i] = 0;
             }
-            //if(a >= 180){a -= 360}
-            //if(a < -180){a += 360}
             arr[i] = a * Math.PI / 180;
         }
-
-        //this.player.dir.pitch = (arr[1] * -1) + (Math.PI * 0.5);
-        //this.player.dir.yaw = (arr[0]);
 
         let rotation = getEulerAngles(getRotationMatrix(globalOrientation.alpha, globalOrientation.beta, globalOrientation.gamma));
         let degtorad = Math.PI / 180;
 
         this.player.dir.pitch = (rotation[1] * degtorad) * -1;
         this.player.dir.yaw = (rotation[2] * degtorad)
+    }
+
+    touchLook(){
+        if(this.hand.pressed === true){
+            if (this.hand.start.y > this.game.config.height * -0.4 && this.hand.start.y < this.game.config.height * 0.4){
+                if(this.hand.pos.y > 0){
+                    let amt = (this.hand.pos.x - this.hand.start.x) * 0.0005;
+                    this.player.dir.yaw -= amt;
+                }
+                if (this.hand.start.x < this.game.config.width * -0.33 || this.hand.start.x > this.game.config.width * 0.33){
+                    let amt = (this.hand.pos.y - this.hand.start.y) * 0.0005;
+                    this.player.dir.pitch += amt;
+                }
+            }
+        }
     }
 
     loadLevel(_name){

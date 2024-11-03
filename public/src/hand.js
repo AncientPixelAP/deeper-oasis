@@ -86,12 +86,14 @@ export default class Hand{
     }
 
     setMouseLock(_bool){
-        this.mouselock = _bool;
-        if(this.mouselock === true){
-            this.scene.input.mouse.requestPointerLock();
-        }else{
-            if (this.scene.input.mouse.locked){
-                this.scene.input.mouse.releasePointerLock();
+        if(isMobile === false){
+            this.mouselock = _bool;
+            if(this.mouselock === true){
+                this.scene.input.mouse.requestPointerLock();
+            }else{
+                if (this.scene.input.mouse.locked){
+                    this.scene.input.mouse.releasePointerLock();
+                }
             }
         }
     }

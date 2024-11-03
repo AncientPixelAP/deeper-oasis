@@ -69,6 +69,10 @@ export default class ScnMain extends Phaser.Scene {
             this.tests.push(this.add.sprite(i*32, rn * 32, "sprDesert00"));
         }*/
 
+        if (this.game.config.width < this.game.config.height){
+            isMobile = true;
+        }
+
         this.btnPlay = new Button(this, { x: -36, y: 0 }, "sprLetter0", "", false, () => {
             this.startGame();
         });
