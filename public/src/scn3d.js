@@ -231,9 +231,18 @@ export default class Scn3d extends Phaser.Scene {
                             }
                             //this.player.setUseBox(model.getScreenBounds());
 
-                            if (this.hand.justReleased || INPUTS.btnA.justReleased) {
-                                model.interact();
+                            if(isMobile === true){
+                                if (this.hand.justReleased === true) {
+                                    if (this.hand.start.y < this.game.config.height * -0.4 || this.hand.start.y > this.game.config.height * 0.4) {
+                                        model.interact();
+                                    }
+                                }
+                            }else{
+                                if (this.hand.justReleased || INPUTS.btnA.justReleased) {
+                                    model.interact();
+                                }
                             }
+                            
                         }else{
                             this.player.setHintPic("sprDebugTexture", 0);
                         }
