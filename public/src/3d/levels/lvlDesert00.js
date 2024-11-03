@@ -566,6 +566,59 @@ export default class LevelDesert00{
     }
 
     calculateSun(_from, _dir) {
+        let recZ = -9999;
+        let sumZ = 0;
+
+        let outsideScreenSafe = false;
+        let cull = false;
+        let ptsOoB = 0;
+
+        let pts = {
+            x: 0,
+            y: -100,
+            z: 1000
+        }
+
+        let nx = pts.x;
+        let ny = pts.y;
+        let nz = pts.z;
+        let outXZ = rti.rotateY([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.yaw);
+        nx = outXZ[0];
+        ny = outXZ[1];
+        nz = outXZ[2];
+        let outYZ = rti.rotateX([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.pitch);
+        nx = outYZ[0];
+        ny = outYZ[1];
+        nz = outYZ[2];
+        let outXY = rti.rotateZ([0, 0, 0], [nx, ny, nz], [0, 0, 0], _dir.roll);
+        nx = outXY[0];
+        ny = outXY[1];
+        nz = outXY[2];
+
+        if (nz <= 10) {
+            //cull = true;
+            //ptsOoB += 1;
+        }
+        if (nz < 0) {
+            nz *= 0.001;//original 0.001
+        }
+        nz *= this.scene.cam.fov;//original
+
+        let nzMod = nz + this.scene.cam.zOffset;
+        let zoom = this.scene.cam.zoom;
+        //this.screenCoords[i].x = (nx / (Math.abs(Math.max(0.1, nzMod)) * 1)) * zoom;//ruckelig bc of abs
+        //this.screenCoords[i].y = (ny / (Math.abs(Math.max(0.1, nzMod)) * 1)) * zoom;//ruckelig bc of abs
+        this.sun.x = (nx / Math.max(0.1, nzMod) * 1) * zoom;
+        this.sun.y = (ny / Math.max(0.1, nzMod) * 1) * zoom;
+
+        if (nz > 0) {
+            this.sun.alpha = 1;
+        } else {
+            this.sun.alpha = 0;
+        }
+    }
+
+    calculateSunOld(_from, _dir) {
         let pts = {
             x: 0,
             y: -100,
@@ -589,7 +642,7 @@ export default class LevelDesert00{
         nz = outXY[2];
         let nzMod = nz + 10;
 
-        let zoom = 400;
+        let zoom = 200;
         this.sun.x = (nx / (Math.abs(nzMod) * 1)) * zoom;
         this.sun.y = (ny / (Math.abs(nzMod) * 1)) * zoom;
 
