@@ -395,11 +395,18 @@ export default class Scn3d extends Phaser.Scene {
         if(isMoving === true){
             this.player.asset = "sprTroglodyte00";
         }else{
-            this.player.asset = "sprTroglodyte01";
+            this.player.asset = "sprTroglodyte04";
+            if (this.player.heldItemData.itemType === "letter") {
+                this.player.asset = "sprTroglodyte01";
+            } else if (this.player.heldItemData.itemType === "seed") {
+                this.player.asset = "sprTroglodyte05";
+            }
         }
-        if (Math.abs(this.player.vel.y) > 1) {
-        //if (this.player.gravity.grounded === false){
+        //if (Math.abs(this.player.vel.y) > 1) {
+        if (this.player.vel.y > 1) {
             this.player.asset = "sprTroglodyte02";
+        } else if (this.player.vel.y < -1){
+            this.player.asset = "sprTroglodyte00";
         }
 
         //JUMP
