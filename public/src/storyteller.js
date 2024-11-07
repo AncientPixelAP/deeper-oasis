@@ -89,7 +89,7 @@ export class Storyteller{
             "I dont know what I want.",
             "I wanted to do so much more...",
             "Ludum Dare 48\nDeeper and deeper",
-            "a game by Sebastian Merkl\ntwitter: @AncientPixel_AP",
+            "a game by Sebastian Merkl\n@ancientpixel.bsky.social",
             "thank you for playing",
             "stay as long as you want",
             "feel free to search for other players",

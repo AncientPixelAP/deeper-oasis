@@ -61,7 +61,8 @@ export default class ScnMain extends Phaser.Scene {
 
         this.btnTxt = this.add.bitmapText(0, -64, "whiteRabbit_16", "", 16, 1).setOrigin(0.5, 0);
 
-        this.loadTxt = this.add.bitmapText(0, this.bottom - 16, "whiteRabbit_16", "a ld48 game by\nSebastian Merkl\ntwitter: @AncientPixel_AP", 16, 1).setOrigin(0.5, 1);
+        this.TitleTxt = this.add.bitmapText(0, this.top + 16, "whiteRabbit_16", "Aleph Qoph / Duat", 16, 1).setOrigin(0.5, 0);
+        this.creditsTxt = this.add.bitmapText(0, this.bottom - 16, "whiteRabbit_16", "a ld48 game by\nSebastian Merkl\n@ancientpixel.bsky.social", 16, 1).setOrigin(0.5, 1);
 
         /*this.tests = [];
         for(let i = 0 ; i < 100 ; i++){
